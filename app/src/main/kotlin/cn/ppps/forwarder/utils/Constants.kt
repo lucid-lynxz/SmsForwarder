@@ -2,6 +2,7 @@ package cn.ppps.forwarder.utils
 
 object Worker {
     const val SEND_MSG_INFO = "send_msg_info"
+    const val SKIP_DUPLICATE_FILTER = "skip_duplicate_filter"
     const val UPDATE_LOGS = "update_logs"
     const val RULE = "rule"
     const val SENDER_INDEX = "sender_index"

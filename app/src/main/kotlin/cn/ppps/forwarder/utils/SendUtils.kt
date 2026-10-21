@@ -61,6 +61,9 @@ object SendUtils {
 
         val request = OneTimeWorkRequestBuilder<SendWorker>().setInputData(
             workDataOf(
+                //手动重新匹配是用户主动发起的，不能被重复消息过滤拦掉
+                Worker.SKIP_DUPLICATE_FILTER to true,
+            workDataOf(
                 Worker.SEND_MSG_INFO to Gson().toJson(msgInfo)
             )
         ).build()

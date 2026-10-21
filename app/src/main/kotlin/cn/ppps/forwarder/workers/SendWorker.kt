@@ -52,6 +52,22 @@ class SendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 //【注意】卡槽id：-1=获取失败、0=卡槽1、1=卡槽2，但是 Rule 表里存的是 SIM1/SIM2
                 val simSlot = "SIM" + (msgInfo.simSlot + 1)
 
+                // 过滤重复消息机制：自动任务与转发规则共用同一条消息，必须放在自动任务处理之前，
+                // 否则重复消息会同时走自动任务通道（logId=-1）再走一次规则通道
+                val duplicateMessagesLimits = SettingUtils.duplicateMessagesLimits * 1000L
+                if (duplicateMessagesLimits > 0L && !inputData.getBoolean(Worker.SKIP_DUPLICATE_FILTER, false)) {
+                    val key = CipherUtils.md5(msgInfo.type + msgInfo.from + msgInfo.content)
+                    val timestamp: Long = System.currentTimeMillis()
+                    var timestampPrev: Long by HistoryUtils(key, timestamp)
+                    Log.d(TAG, "duplicateMessagesLimits=$duplicateMessagesLimits, timestamp=$timestamp, timestampPrev=$timestampPrev, msgInfo=$msgInfo")
+                    if (timestampPrev != timestamp && timestamp - timestampPrev <= duplicateMessagesLimits) {
+                        Log.e(TAG, "过滤重复消息机制")
+                        timestampPrev = timestamp
+                        return@withContext Result.failure(workDataOf("send" to "failed"))
+                    }
+                    timestampPrev = timestamp
+                }
+
                 //自动任务处理逻辑
                 autoTaskProcess(msgInfo, msgInfoJson, simSlot)
 
@@ -65,21 +81,6 @@ class SendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         Log.e(TAG, "免打扰(禁用转发)时间段")
                         return@withContext Result.failure(workDataOf("send" to "failed"))
                     }
-                }
-
-                // 过滤重复消息机制
-                val duplicateMessagesLimits = SettingUtils.duplicateMessagesLimits * 1000L
-                if (duplicateMessagesLimits > 0L) {
-                    val key = CipherUtils.md5(msgInfo.type + msgInfo.from + msgInfo.content)
-                    val timestamp: Long = System.currentTimeMillis()
-                    var timestampPrev: Long by HistoryUtils(key, timestamp)
-                    Log.d(TAG, "duplicateMessagesLimits=$duplicateMessagesLimits, timestamp=$timestamp, timestampPrev=$timestampPrev, msgInfo=$msgInfo")
-                    if (timestampPrev != timestamp && timestamp - timestampPrev <= duplicateMessagesLimits) {
-                        Log.e(TAG, "过滤重复消息机制")
-                        timestampPrev = timestamp
-                        return@withContext Result.failure(workDataOf("send" to "failed"))
-                    }
-                    timestampPrev = timestamp
                 }
 
                 val ruleList: List<Rule> = Core.rule.getRuleList(msgInfo.type, 1, simSlot)

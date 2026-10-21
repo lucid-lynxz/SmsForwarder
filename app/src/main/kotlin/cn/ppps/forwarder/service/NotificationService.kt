@@ -12,6 +12,7 @@ import androidx.work.workDataOf
 import cn.ppps.forwarder.core.Core
 import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.entity.MsgInfo
+import cn.ppps.forwarder.utils.DuplicateMsgUtils
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.PACKAGE_NAME
 import cn.ppps.forwarder.utils.SettingUtils
@@ -104,6 +105,12 @@ class NotificationService : NotificationListenerService() {
                 return
             }
 
+            //同一条通知被重复上报（先 post 再 update）时只转发一次
+            if (isDuplicatePostedNotification(sbn.key, text)) {
+                Log.d(TAG, "同一通知在短时间内重复上报，跳过转发。key=${sbn.key}, text=$text")
+                return
+            }
+
             val msgInfo = MsgInfo("app", from, text, Date(), title, -1)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 Log.d(TAG, "消息的UID====>" + sbn.uid)
@@ -162,8 +169,39 @@ class NotificationService : NotificationListenerService() {
         return false
     }
 
+    //同一条通知在短时间内重复上报且内容视为同一条消息时判定为重复，命中后不刷新时间戳，
+    //以便紧随其后的真实新消息仍能正常转发
+    private fun isDuplicatePostedNotification(key: String, content: String): Boolean =
+        synchronized(postedNotifications) {
+            val now = System.currentTimeMillis()
+            val posted = postedNotifications[key]
+            if (posted != null && now - posted.time <= DUPLICATE_NOTIFICATION_WINDOW_MS
+                && DuplicateMsgUtils.isSameMessageContent(posted.content, content)
+            ) {
+                true
+            } else {
+                postedNotifications[key] = PostedNotification(now, content)
+                while (postedNotifications.size > MAX_TRACKED_NOTIFICATIONS) {
+                    postedNotifications.remove(postedNotifications.keys.first())
+                }
+                false
+            }
+        }
+
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         Log.d(TAG, "Removed Package Name : ${sbn?.packageName}")
+    }
+
+    private data class PostedNotification(val time: Long, val content: String)
+
+    companion object {
+        //同一条通知重复上报的判定窗口（毫秒）：微信 post 与随后的 update 都在这个间隔内，
+        //而真正的下一条消息不会这么快
+        private const val DUPLICATE_NOTIFICATION_WINDOW_MS = 3000L
+        private const val MAX_TRACKED_NOTIFICATIONS = 64
+
+        //通知 key（包名|tag|id|userId）-> 最近一次转发的内容与时间，按插入顺序淘汰
+        private val postedNotifications = LinkedHashMap<String, PostedNotification>()
     }
 
 }
