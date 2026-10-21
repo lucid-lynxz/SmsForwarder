@@ -71,6 +71,7 @@
     <string name="menu_logcat">Logcat</string>
     <string name="menu_help">Help</string>
     <string name="menu_about">About</string>
+    <string name="menu_backup_restore">Backup &amp; Restore</string>
 
     <string name="about_app_version">AppVer: %s</string>
     <string name="about_app_version_tips" formatted="false">Version Name: %s\nVersion Code: %s\nBuild Time: %s\nGit Commit ID: %s</string>

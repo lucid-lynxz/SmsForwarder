@@ -80,7 +80,8 @@ class CloneFragment : BaseFragment<FragmentClientCloneBinding?>(), View.OnClickL
 
     override fun initTitle(): TitleBar? {
         val titleBar = super.initTitle()!!.setImmersive(false)
-        titleBar.setTitle(R.string.api_clone)
+        //从【备份与恢复】入口进入时只展示离线模式
+        titleBar.setTitle(if (defaultSelection == 1) R.string.menu_backup_restore else R.string.api_clone)
         return titleBar
     }
 

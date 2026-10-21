@@ -15,6 +15,8 @@
         <item />
         <item>@string/menu_help</item>
         <item>@string/menu_about</item>
+        <item />
+        <item>@string/menu_backup_restore</item>
     </string-array>
 
     <array name="menu_icons">
@@ -31,6 +33,8 @@
         <item />
         <item>@drawable/ic_menu_help</item>
         <item>@drawable/ic_menu_about</item>
+        <item />
+        <item>@drawable/ic_menu_backup</item>
     </array>
 
     <string-array name="adBlockUrl">

@@ -71,6 +71,7 @@
     <string name="menu_logcat">日志抓取·Logcat</string>
     <string name="menu_help">使用帮助</string>
     <string name="menu_about">关于软件</string>
+    <string name="menu_backup_restore">备份与恢复</string>
 
     <string name="about_app_version">软件版本：%s</string>
     <string name="about_app_version_tips" formatted="false">版本名称：%s\n版本代码：%s\n构建时间：%s\nGit提交ID：%s</string>

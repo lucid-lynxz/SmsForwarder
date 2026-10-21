@@ -36,12 +36,14 @@ import cn.ppps.forwarder.fragment.SendersFragment
 import cn.ppps.forwarder.fragment.ServerFragment
 import cn.ppps.forwarder.fragment.SettingsFragment
 import cn.ppps.forwarder.fragment.TasksFragment
+import cn.ppps.forwarder.fragment.client.CloneFragment
 import cn.ppps.forwarder.service.ForegroundService
 import cn.ppps.forwarder.utils.ACTION_START
 import cn.ppps.forwarder.utils.CommonUtils.Companion.restartApplication
 import cn.ppps.forwarder.utils.EVENT_LOAD_APP_LIST
 import cn.ppps.forwarder.utils.FRPC_LIB_DOWNLOAD_URL
 import cn.ppps.forwarder.utils.FRPC_LIB_VERSION
+import cn.ppps.forwarder.utils.KEY_DEFAULT_SELECTION
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.XToastUtils
@@ -52,6 +54,7 @@ import com.jeremyliao.liveeventbus.LiveEventBus
 import com.xuexiang.xhttp2.XHttp
 import com.xuexiang.xhttp2.callback.DownloadProgressCallBack
 import com.xuexiang.xhttp2.exception.ApiException
+import com.xuexiang.xpage.core.PageOption
 import com.xuexiang.xui.XUI.getContext
 import com.xuexiang.xui.utils.ResUtils
 import com.xuexiang.xui.utils.ThemeUtils
@@ -83,6 +86,7 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
     private val POS_APPS = 9
     private val POS_HELP = 11 //10为空行
     private val POS_ABOUT = 12
+    private val POS_BACKUP = 14 //13为空行
     private var needToAppListFragment = false
 
     private lateinit var mTabLayout: TabLayout
@@ -230,6 +234,8 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
                 SpaceItem(15),
                 createItemFor(POS_HELP),
                 createItemFor(POS_ABOUT),
+                SpaceItem(15),
+                createItemFor(POS_BACKUP),
             )
         )
         mAdapter.setListener(this)
@@ -317,6 +323,13 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
 
             POS_HELP -> AgentWebActivity.goWeb(this, getString(R.string.url_help))
             POS_ABOUT -> openNewPage(AboutFragment::class.java)
+            POS_BACKUP -> {
+                //备份与恢复：只保留离线模式
+                PageOption.to(CloneFragment::class.java)
+                    .putInt(KEY_DEFAULT_SELECTION, 1)
+                    .setNewActivity(true)
+                    .open(this)
+            }
         }
     }
 
