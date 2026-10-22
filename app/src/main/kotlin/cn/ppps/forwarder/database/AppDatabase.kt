@@ -32,7 +32,7 @@ import cn.ppps.forwarder.utils.TAG_LIST
 @Database(
     entities = [Frpc::class, Msg::class, Logs::class, Rule::class, Sender::class, Task::class, TimeWindow::class, MaskRule::class],
     views = [LogsDetail::class],
-    version = 22,
+    version = 23,
     exportSchema = false
 )
 @TypeConverters(ConvertersDate::class)
@@ -119,6 +119,7 @@ custom_domains = smsf.demo.com
                     MIGRATION_19_20,
                     MIGRATION_20_21,
                     MIGRATION_21_22,
+                    MIGRATION_22_23,
                 )
 
             /*if (BuildConfig.DEBUG) {
@@ -505,6 +506,15 @@ CREATE TABLE "MaskRule" (
                 )
                 database.execSQL("Alter table Sender add column time_window_id INTEGER NOT NULL DEFAULT 0 ")
                 database.execSQL("Alter table Sender add column mask_rule_ids TEXT NOT NULL DEFAULT '' ")
+            }
+        }
+
+        //允许转发时间窗口从发送通道移到转发规则（可绑定多个）
+        private val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("Alter table Rule add column time_window_ids TEXT NOT NULL DEFAULT '' ")
+                //Sender.time_window_id 不再映射到实体，Room 会忽略这个残留列。
+                //不重建 Sender 删列：改名后的旧表被 Logs/Rule 外键引用，DROP 时级联会连带清空转发日志。
             }
         }
 

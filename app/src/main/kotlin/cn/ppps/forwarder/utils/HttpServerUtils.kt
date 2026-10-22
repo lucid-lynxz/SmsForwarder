@@ -216,6 +216,7 @@ class HttpServerUtils private constructor() {
                 if (!cloneInfo.ruleList.isNullOrEmpty()) {
                     for (rule in cloneInfo.ruleList!!) {
                         if (rule.title.isNullOrEmpty()) rule.title = "" //兼容旧版本
+                        if (rule.timeWindowIds.isNullOrEmpty()) rule.timeWindowIds = "" //兼容旧版本
                         Core.rule.insert(rule)
                     }
                 }

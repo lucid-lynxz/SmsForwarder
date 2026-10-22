@@ -1252,19 +1252,19 @@
     <string name="add_time_window">Add Time Window</string>
     <string name="edit_time_window">Edit Time Window</string>
     <string name="delete_time_window_title">Time Window Operation Confirmation</string>
-    <string name="delete_time_window_tips">Senders bound to this time window never forward outside it, and deleting it will stop them forwarding!\n\nAre you sure to delete this time window?</string>
+    <string name="delete_time_window_tips">Forwarding rules bound to this time window never forward outside it, and deleting it will stop those rules forwarding!\n\nAre you sure to delete this time window?</string>
     <string name="delete_time_window_toast">This time window has been deleted!</string>
     <string name="time_window_name">Window Name</string>
     <string name="time_window_name_hint">Eg. Weekday working hours</string>
-    <string name="sender_time_window">Forwarding Time Window</string>
-    <string name="sender_time_window_tips">This sender forwards only inside the window; select "Unlimited" to always forward</string>
-    <string name="time_window_unlimited">Unlimited</string>
+    <string name="rule_time_window">Forwarding Time Window</string>
+    <string name="rule_time_window_tips">After this rule matches, messages forward only when the current time falls in a checked window; check none to always forward</string>
     <string name="time_window_day">Allowed Days</string>
     <string name="time_window_day_tips">Nothing checked means every day</string>
     <string name="time_window_period">Allowed Period</string>
     <string name="time_window_period_tips">If the end time is less than the start time, it will span days; if it is equal, it will be all day</string>
-    <string name="silent_time_window_period">Current time is not inside forwarding time window [%1$s], this sender is skipped</string>
-    <string name="sender_time_window_missing">The time window bound to this sender is missing, this sender is skipped</string>
+    <string name="rule_time_window_blocked">Current time is not inside forwarding time window [%1$s], this rule is skipped</string>
+    <string name="rule_time_window_missing">The time windows bound to this rule are missing, this rule is skipped</string>
+    <string name="time_window_missing">This time window does not exist, it may have been deleted</string>
     <string name="time_window_all_days">Every day</string>
     <string name="time_window_all_day">All day</string>
     <!--Content masking rules-->

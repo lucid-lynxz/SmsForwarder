@@ -477,6 +477,35 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layout_time_window"
+                style="@style/BarStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                tools:ignore="RtlSymmetry">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rule_time_window"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rule_time_window_tips"
+                    android:textSize="@dimen/text_size_mini"
+                    tools:ignore="SmallSp" />
+
+                <com.xuexiang.xui.widget.flowlayout.FlowTagLayout
+                    android:id="@+id/flowlayout_time_window"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/layout_silent_period"
                 style="@style/BarStyle"
                 android:layout_width="match_parent"

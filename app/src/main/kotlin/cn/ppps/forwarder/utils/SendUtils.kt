@@ -102,24 +102,6 @@ object SendUtils {
                 return
             }
 
-            //允许转发时间窗口（通道级白名单）：与转发规则的免打扰时段（黑名单）相互独立
-            if (sender.timeWindowId > 0L) {
-                val timeWindow = Core.timeWindow.getOne(sender.timeWindowId)
-                if (timeWindow == null) {
-                    //窗口被删除时按不转发处理，避免在错误的时段把消息发出去
-                    Log.d(TAG, "timeWindow = ${sender.timeWindowId} is missing")
-                    updateLogs(logId, 0, getString(R.string.sender_time_window_missing))
-                    senderLogic(0, msgInfo, rule, senderIndex, msgId)
-                    return
-                }
-                if (!timeWindow.isInWindow()) {
-                    Log.d(TAG, "当前时间不在时间窗口[${timeWindow.name}]内，跳过通道 ${sender.name}")
-                    updateLogs(logId, 0, String.format(getString(R.string.silent_time_window_period), timeWindow.name))
-                    senderLogic(0, msgInfo, rule, senderIndex, msgId)
-                    return
-                }
-            }
-
             //免打扰(禁用转发)：日期段 与 时间段 为「与」关系，且至少配置一项才生效
             //未配置星期视为「不限星期」，未配置时段视为「不限时段」，二者都命中才拦截
             Log.d(TAG, "silentDayOfWeek = ${rule.silentDayOfWeek}, silentPeriodStart = ${rule.silentPeriodStart}, silentPeriodEnd = ${rule.silentPeriodEnd}")
@@ -232,6 +214,24 @@ object SendUtils {
             updateLogs(logId, 0, e.message.toString())
             senderLogic(0, msgInfo, rule, senderIndex, msgId)
         }
+    }
+
+    //规则级二次过滤：命中任一绑定时间窗口即放行，未绑定视为不限时段；返回拦截原因，null 表示放行
+    fun timeWindowBlockReason(rule: Rule): String? {
+        val ids = rule.timeWindowIdList
+        if (ids.isEmpty()) return null
+
+        val timeWindows = Core.timeWindow.getByIds(ids)
+        if (timeWindows.isEmpty()) {
+            //窗口全部被删除时按不转发处理，避免在错误的时段把消息发出去
+            Log.d(TAG, "rule = ${rule.id} timeWindows = ${rule.timeWindowIds} are all missing")
+            return getString(R.string.rule_time_window_missing)
+        }
+        if (timeWindows.any { it.isInWindow() }) return null
+
+        val names = timeWindows.joinToString("/") { it.name }
+        Log.d(TAG, "当前时间不在规则[${rule.id}]绑定的时间窗口[$names]内")
+        return String.format(getString(R.string.rule_time_window_blocked), names)
     }
 
     //通道级内容打码：按规则的 sort 顺序依次替换，未绑定或全部禁用时原样返回

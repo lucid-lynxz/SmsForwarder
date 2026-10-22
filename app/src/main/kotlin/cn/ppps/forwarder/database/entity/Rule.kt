@@ -83,7 +83,12 @@ data class Rule(
     @ColumnInfo(name = "silent_period_end", defaultValue = "0") var silentPeriodEnd: Int = 0,
     @ColumnInfo(name = "silent_day_of_week", defaultValue = "") var silentDayOfWeek: String = "",
     @ColumnInfo(name = "title", defaultValue = "") var title: String = "",
+    //绑定的允许转发时间窗口 id 列表（逗号分隔），空 = 不限；命中任一窗口即放行
+    @ColumnInfo(name = "time_window_ids", defaultValue = "") var timeWindowIds: String = "",
 ) : Parcelable {
+
+    val timeWindowIdList: List<Long>
+        get() = timeWindowIds.split(",").mapNotNull { it.trim().toLongOrNull() }
 
     companion object {
         val TAG: String = Rule::class.java.simpleName

@@ -1253,19 +1253,19 @@
     <string name="add_time_window">添加时间窗口</string>
     <string name="edit_time_window">编辑时间窗口</string>
     <string name="delete_time_window_title">时间窗口操作确认</string>
-    <string name="delete_time_window_tips">绑定了该时间窗口的发送通道在窗口外不会转发任何消息，删除后这些通道将停止转发！\n\n确定删除该条时间窗口?</string>
+    <string name="delete_time_window_tips">绑定了该时间窗口的转发规则在窗口外不会转发任何消息，删除后这些规则将停止转发！\n\n确定删除该条时间窗口?</string>
     <string name="delete_time_window_toast">该条时间窗口已经删除！</string>
     <string name="time_window_name">窗口名称</string>
     <string name="time_window_name_hint">例如：工作日上班时间</string>
-    <string name="sender_time_window">允许转发时间窗口</string>
-    <string name="sender_time_window_tips">仅在该窗口内允许此通道转发；选择「不限」则始终转发</string>
-    <string name="time_window_unlimited">不限</string>
+    <string name="rule_time_window">允许转发时间窗口</string>
+    <string name="rule_time_window_tips">命中本规则后，仅在当前时间落在任一勾选窗口内才转发；一个都不选则始终转发</string>
     <string name="time_window_day">允许转发的星期</string>
     <string name="time_window_day_tips">不勾选视为每天</string>
     <string name="time_window_period">允许转发的时间段</string>
     <string name="time_window_period_tips">结束时间小于开始则跨天；相等则全天</string>
-    <string name="silent_time_window_period">当前时间不在允许转发时间窗口[%1$s]内，已跳过该通道</string>
-    <string name="sender_time_window_missing">通道绑定的时间窗口不存在，已跳过该通道</string>
+    <string name="rule_time_window_blocked">当前时间不在允许转发时间窗口[%1$s]内，本规则已跳过</string>
+    <string name="rule_time_window_missing">规则绑定的时间窗口不存在，本规则已跳过</string>
+    <string name="time_window_missing">该时间窗口不存在，可能已被删除</string>
     <string name="time_window_all_days">每天</string>
     <string name="time_window_all_day">全天</string>
     <!--内容打码规则-->

@@ -1254,19 +1254,19 @@
     <string name="add_time_window">添加時間窗口</string>
     <string name="edit_time_window">編輯時間窗口</string>
     <string name="delete_time_window_title">時間窗口操作確認</string>
-    <string name="delete_time_window_tips">綁定了該時間窗口的發送通道在窗口外不會轉發任何訊息，刪除後這些通道將停止轉發！\n\n確定刪除該條時間窗口?</string>
+    <string name="delete_time_window_tips">綁定了該時間窗口的轉發規則在窗口外不會轉發任何訊息，刪除後這些規則將停止轉發！\n\n確定刪除該條時間窗口?</string>
     <string name="delete_time_window_toast">該條時間窗口已經刪除！</string>
     <string name="time_window_name">窗口名稱</string>
     <string name="time_window_name_hint">例如：工作日上班時間</string>
-    <string name="sender_time_window">允許轉發時間窗口</string>
-    <string name="sender_time_window_tips">僅在該窗口內允許此通道轉發；選擇「不限」則始終轉發</string>
-    <string name="time_window_unlimited">不限</string>
+    <string name="rule_time_window">允許轉發時間窗口</string>
+    <string name="rule_time_window_tips">命中本規則後，僅在當前時間落在任一勾選窗口內才轉發；一個都不選則始終轉發</string>
     <string name="time_window_day">允許轉發的星期</string>
     <string name="time_window_day_tips">不勾選視為每天</string>
     <string name="time_window_period">允許轉發的時間段</string>
     <string name="time_window_period_tips">結束時間小於開始則跨天；相等則全天</string>
-    <string name="silent_time_window_period">當前時間不在允許轉發時間窗口[%1$s]內，已跳過該通道</string>
-    <string name="sender_time_window_missing">通道綁定的時間窗口不存在，已跳過該通道</string>
+    <string name="rule_time_window_blocked">當前時間不在允許轉發時間窗口[%1$s]內，本規則已跳過</string>
+    <string name="rule_time_window_missing">規則綁定的時間窗口不存在，本規則已跳過</string>
+    <string name="time_window_missing">該時間窗口不存在，可能已被刪除</string>
     <string name="time_window_all_days">每天</string>
     <string name="time_window_all_day">全天</string>
     <!--內容打碼規則-->

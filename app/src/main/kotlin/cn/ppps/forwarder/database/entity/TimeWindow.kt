@@ -11,7 +11,7 @@ import java.util.Calendar
 import java.util.Date
 
 /**
- * 通道级允许转发时间窗口：命中窗口才转发，未命中则跳过该通道
+ * 允许转发时间窗口：一种可被转发规则引用的过滤规则，命中窗口才放行，未命中则跳过整条规则
  */
 @Parcelize
 @Entity(tableName = "TimeWindow")

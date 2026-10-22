@@ -35,8 +35,6 @@ data class Sender(
     @ColumnInfo(name = "json_setting", defaultValue = "") var jsonSetting: String,
     @ColumnInfo(name = "status", defaultValue = "1") var status: Int = 1,
     @ColumnInfo(name = "time") var time: Date = Date(),
-    //绑定的允许转发时间窗口，0 = 不限
-    @ColumnInfo(name = "time_window_id", defaultValue = "0") var timeWindowId: Long = 0,
     //绑定的打码规则 id 列表（逗号分隔），空 = 不打码
     @ColumnInfo(name = "mask_rule_ids", defaultValue = "") var maskRuleIds: String = "",
 ) : Parcelable {

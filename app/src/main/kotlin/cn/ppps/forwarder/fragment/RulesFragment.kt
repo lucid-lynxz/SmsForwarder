@@ -52,6 +52,12 @@ class RulesFragment : BaseFragment<FragmentRulesBinding?>(), RulePagingAdapter.O
         titleBar!!.setLeftImageResource(R.drawable.ic_action_menu)
         titleBar!!.setTitle(R.string.menu_rules)
         titleBar!!.setLeftClickListener { getContainer()?.openMenu() }
+        titleBar!!.addAction(object : TitleBar.ImageAction(R.drawable.auto_task_icon_custom_time) {
+            @SingleClick
+            override fun performAction(view: View) {
+                openNewPage(TimeWindowsFragment::class.java)
+            }
+        })
         titleBar!!.addAction(object : TitleBar.ImageAction(R.drawable.ic_add) {
             @SingleClick
             override fun performAction(view: View) {

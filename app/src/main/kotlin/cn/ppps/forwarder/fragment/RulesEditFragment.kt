@@ -29,6 +29,7 @@ import cn.ppps.forwarder.core.BaseFragment
 import cn.ppps.forwarder.core.Core
 import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.database.entity.Sender
+import cn.ppps.forwarder.database.entity.TimeWindow
 import cn.ppps.forwarder.database.viewmodel.BaseViewModelFactory
 import cn.ppps.forwarder.database.viewmodel.RuleViewModel
 import cn.ppps.forwarder.databinding.FragmentRulesEditBinding
@@ -83,6 +84,7 @@ import com.xuexiang.xrouter.utils.TextUtils
 import com.xuexiang.xui.widget.actionbar.TitleBar
 import com.xuexiang.xui.widget.dialog.materialdialog.DialogAction
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog
+import com.xuexiang.xui.widget.flowlayout.FlowTagLayout
 import com.xuexiang.xui.widget.picker.widget.builder.OptionsPickerBuilder
 import com.xuexiang.xui.widget.picker.widget.listener.OnOptionsSelectListener
 import com.xuexiang.xui.widget.spinner.materialspinner.MaterialSpinner
@@ -111,6 +113,10 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
     private val mTimeOption = DataProvider.timePeriodOption
     private var silentPeriodStart = 0
     private var silentPeriodEnd = 0
+
+    //允许转发时间窗口（二次过滤），不勾选任何窗口视为不限时段
+    private val timeWindowList: List<TimeWindow> = Core.timeWindow.getAllNonCache()
+    private var selectedTimeWindowPositions: List<Int> = emptyList()
 
     //所有发送通道下拉框
     private var senderListAll = mutableListOf<Sender>()
@@ -213,6 +219,8 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
 
         //创建标签按钮
         CommonUtils.createTagButtons(requireContext(), binding!!.glSmsTemplate, binding!!.etSmsTemplate, ruleType)
+
+        initTimeWindowTags()
 
         if (ruleId <= 0) { //新增
             titleBar?.setSubTitle(getString(R.string.add_rule))
@@ -486,6 +494,30 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
         })
     }
 
+    //初始化允许转发时间窗口标签
+    private fun initTimeWindowTags() {
+        if (timeWindowList.isEmpty()) return
+        binding!!.flowlayoutTimeWindow.setTagCheckedMode(FlowTagLayout.FLOW_TAG_CHECKED_MULTI)
+        binding!!.flowlayoutTimeWindow.setItems(timeWindowList.map { it.name })
+        binding!!.flowlayoutTimeWindow.setOnTagSelectListener { _, _, list -> selectedTimeWindowPositions = list ?: emptyList() }
+    }
+
+    private fun bindTimeWindowTags(timeWindowIds: String) {
+        //无时间窗口时标签未初始化，去设置选中态会空指针
+        if (timeWindowList.isEmpty()) return
+        val ids = timeWindowIds.split(",").mapNotNull { it.trim().toLongOrNull() }
+        val positions = timeWindowList.mapIndexedNotNull { position, timeWindow ->
+            if (ids.contains(timeWindow.id)) position else null
+        }
+        selectedTimeWindowPositions = positions
+        binding!!.flowlayoutTimeWindow.setSelectedPositions(positions)
+    }
+
+    //标签按 timeWindowList 顺序生成，勾选多个窗口即「命中任一即放行」
+    private fun selectedTimeWindowIds(): String =
+        timeWindowList.filterIndexed { index, _ -> selectedTimeWindowPositions.contains(index) }
+            .joinToString(",") { it.id.toString() }
+
     //初始化APP下拉列表
     private fun initAppSpinner() {
         if (ruleType != "app") return
@@ -580,6 +612,7 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
                 binding!!.sbStatus.isChecked = rule.statusChecked
                 silentPeriodStart = rule.silentPeriodStart
                 silentPeriodEnd = rule.silentPeriodEnd
+                bindTimeWindowTags(rule.timeWindowIds)
                 //初始化发送通道下拉框
                 initSenderSpinner()
 
@@ -708,7 +741,8 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
             silentPeriodStart,
             silentPeriodEnd,
             silentDayOfWeek,
-            ruleTitle
+            ruleTitle,
+            selectedTimeWindowIds()
         )
     }
 
@@ -863,6 +897,11 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
                 val msgInfo = MsgInfo(ruleType, etFrom.text.toString(), msg.toString(), Date(), simInfo, simSlot, subId, callTypeTest)
                 if (!rule.checkMsg(msgInfo)) {
                     throw Exception(getString(R.string.unmatched_rule))
+                }
+                //测试发送不经过 SendWorker，这里补上时间窗口二次过滤，窗口外的拦截原因直接提示
+                val timeWindowBlockReason = SendUtils.timeWindowBlockReason(rule)
+                if (timeWindowBlockReason != null) {
+                    throw Exception(timeWindowBlockReason)
                 }
 
                 Thread {

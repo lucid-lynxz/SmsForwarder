@@ -71,7 +71,7 @@ class TimeWindowEditFragment : BaseFragment<FragmentTimeWindowEditBinding?>(), V
         binding!!.btnDel.setText(R.string.del)
         val timeWindow = Core.timeWindow.getOne(timeWindowId)
         if (timeWindow == null) {
-            XToastUtils.error(R.string.sender_time_window_missing)
+            XToastUtils.error(R.string.time_window_missing)
             popToBack()
             return
         }

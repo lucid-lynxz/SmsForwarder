@@ -106,6 +106,13 @@ class SendWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         Core.logs.insert(log)
                         continue
                     }
+                    //允许转发时间窗口二次过滤：命中规则但不在任何窗口内时，整条规则都不转发
+                    val timeWindowBlockReason = SendUtils.timeWindowBlockReason(rule)
+                    if (timeWindowBlockReason != null) {
+                        val log = Logs(0, msgInfo.type, msgId, rule.id, sender.id, 0, timeWindowBlockReason)
+                        Core.logs.insert(log)
+                        continue
+                    }
                     val log = Logs(0, msgInfo.type, msgId, rule.id, sender.id)
                     val logId = Core.logs.insert(log)
                     SendUtils.sendMsgSender(msgInfo, rule, 0, logId, msgId)
