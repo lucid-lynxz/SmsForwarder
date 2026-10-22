@@ -9,26 +9,30 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cn.ppps.forwarder.database.dao.FrpcDao
 import cn.ppps.forwarder.database.dao.LogsDao
+import cn.ppps.forwarder.database.dao.MaskRuleDao
 import cn.ppps.forwarder.database.dao.MsgDao
 import cn.ppps.forwarder.database.dao.RuleDao
 import cn.ppps.forwarder.database.dao.SenderDao
 import cn.ppps.forwarder.database.dao.TaskDao
+import cn.ppps.forwarder.database.dao.TimeWindowDao
 import cn.ppps.forwarder.database.entity.Frpc
 import cn.ppps.forwarder.database.entity.Logs
 import cn.ppps.forwarder.database.entity.LogsDetail
+import cn.ppps.forwarder.database.entity.MaskRule
 import cn.ppps.forwarder.database.entity.Msg
 import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.database.entity.Sender
 import cn.ppps.forwarder.database.entity.Task
+import cn.ppps.forwarder.database.entity.TimeWindow
 import cn.ppps.forwarder.database.ext.ConvertersDate
 import cn.ppps.forwarder.utils.DATABASE_NAME
 import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.TAG_LIST
 
 @Database(
-    entities = [Frpc::class, Msg::class, Logs::class, Rule::class, Sender::class, Task::class],
+    entities = [Frpc::class, Msg::class, Logs::class, Rule::class, Sender::class, Task::class, TimeWindow::class, MaskRule::class],
     views = [LogsDetail::class],
-    version = 21,
+    version = 22,
     exportSchema = false
 )
 @TypeConverters(ConvertersDate::class)
@@ -40,6 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun ruleDao(): RuleDao
     abstract fun senderDao(): SenderDao
     abstract fun taskDao(): TaskDao
+    abstract fun timeWindowDao(): TimeWindowDao
+    abstract fun maskRuleDao(): MaskRuleDao
 
     companion object {
         @Volatile
@@ -112,6 +118,7 @@ custom_domains = smsf.demo.com
                     MIGRATION_18_19,
                     MIGRATION_19_20,
                     MIGRATION_20_21,
+                    MIGRATION_21_22,
                 )
 
             /*if (BuildConfig.DEBUG) {
@@ -465,6 +472,39 @@ CREATE TABLE "Task" (
         private val MIGRATION_20_21 = object : Migration(20, 21) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("Alter table rule add column title TEXT NOT NULL DEFAULT '' ")
+            }
+        }
+
+        //发送通道绑定允许转发时间窗口与打码规则
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+CREATE TABLE "TimeWindow" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "name" TEXT NOT NULL DEFAULT '',
+  "day_of_week" TEXT NOT NULL DEFAULT '',
+  "period_start" TEXT NOT NULL DEFAULT '',
+  "period_end" TEXT NOT NULL DEFAULT '',
+  "time" INTEGER NOT NULL
+)
+""".trimIndent()
+                )
+                database.execSQL(
+                    """
+CREATE TABLE "MaskRule" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "name" TEXT NOT NULL DEFAULT '',
+  "regex" TEXT NOT NULL DEFAULT '',
+  "replacement" TEXT NOT NULL DEFAULT '',
+  "enable" INTEGER NOT NULL DEFAULT 1,
+  "sort" INTEGER NOT NULL DEFAULT 0,
+  "time" INTEGER NOT NULL
+)
+""".trimIndent()
+                )
+                database.execSQL("Alter table Sender add column time_window_id INTEGER NOT NULL DEFAULT 0 ")
+                database.execSQL("Alter table Sender add column mask_rule_ids TEXT NOT NULL DEFAULT '' ")
             }
         }
 

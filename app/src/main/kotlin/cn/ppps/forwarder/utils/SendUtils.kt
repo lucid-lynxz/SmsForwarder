@@ -8,6 +8,7 @@ import cn.ppps.forwarder.R
 import cn.ppps.forwarder.core.Core
 import cn.ppps.forwarder.database.entity.MsgAndLogs
 import cn.ppps.forwarder.database.entity.Rule
+import cn.ppps.forwarder.database.entity.Sender
 import cn.ppps.forwarder.entity.MsgInfo
 import cn.ppps.forwarder.entity.result.SendResponse
 import cn.ppps.forwarder.entity.setting.BarkSetting
@@ -63,7 +64,6 @@ object SendUtils {
             workDataOf(
                 //手动重新匹配是用户主动发起的，不能被重复消息过滤拦掉
                 Worker.SKIP_DUPLICATE_FILTER to true,
-            workDataOf(
                 Worker.SEND_MSG_INFO to Gson().toJson(msgInfo)
             )
         ).build()
@@ -102,6 +102,24 @@ object SendUtils {
                 return
             }
 
+            //允许转发时间窗口（通道级白名单）：与转发规则的免打扰时段（黑名单）相互独立
+            if (sender.timeWindowId > 0L) {
+                val timeWindow = Core.timeWindow.getOne(sender.timeWindowId)
+                if (timeWindow == null) {
+                    //窗口被删除时按不转发处理，避免在错误的时段把消息发出去
+                    Log.d(TAG, "timeWindow = ${sender.timeWindowId} is missing")
+                    updateLogs(logId, 0, getString(R.string.sender_time_window_missing))
+                    senderLogic(0, msgInfo, rule, senderIndex, msgId)
+                    return
+                }
+                if (!timeWindow.isInWindow()) {
+                    Log.d(TAG, "当前时间不在时间窗口[${timeWindow.name}]内，跳过通道 ${sender.name}")
+                    updateLogs(logId, 0, String.format(getString(R.string.silent_time_window_period), timeWindow.name))
+                    senderLogic(0, msgInfo, rule, senderIndex, msgId)
+                    return
+                }
+            }
+
             //免打扰(禁用转发)：日期段 与 时间段 为「与」关系，且至少配置一项才生效
             //未配置星期视为「不限星期」，未配置时段视为「不限时段」，二者都命中才拦截
             Log.d(TAG, "silentDayOfWeek = ${rule.silentDayOfWeek}, silentPeriodStart = ${rule.silentPeriodStart}, silentPeriodEnd = ${rule.silentPeriodEnd}")
@@ -119,85 +137,88 @@ object SendUtils {
                 }
             }
 
+            //打码后的内容只发给当前通道，多通道共用的 msgInfo 保持原样
+            val sendMsgInfo = applyMaskRules(sender, msgInfo)
+
             when (sender.type) {
                 TYPE_DINGTALK_GROUP_ROBOT -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, DingtalkGroupRobotSetting::class.java)
-                    DingtalkGroupRobotUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    DingtalkGroupRobotUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_EMAIL -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, EmailSetting::class.java)
-                    EmailUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    EmailUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_BARK -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, BarkSetting::class.java)
-                    BarkUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    BarkUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_WEBHOOK -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, WebhookSetting::class.java)
-                    WebhookUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    WebhookUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_WEWORK_ROBOT -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, WeworkRobotSetting::class.java)
-                    WeworkRobotUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    WeworkRobotUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_WEWORK_AGENT -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, WeworkAgentSetting::class.java)
-                    WeworkAgentUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    WeworkAgentUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_SERVERCHAN -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, ServerchanSetting::class.java)
-                    ServerchanUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    ServerchanUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_TELEGRAM -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, TelegramSetting::class.java)
-                    TelegramUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    TelegramUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_SMS -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, SmsSetting::class.java)
-                    SmsUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    SmsUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_FEISHU -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, FeishuSetting::class.java)
-                    FeishuUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    FeishuUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_PUSHPLUS -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, PushplusSetting::class.java)
-                    PushplusUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    PushplusUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_GOTIFY -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, GotifySetting::class.java)
-                    GotifyUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    GotifyUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_DINGTALK_INNER_ROBOT -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, DingtalkInnerRobotSetting::class.java)
-                    DingtalkInnerRobotUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    DingtalkInnerRobotUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_FEISHU_APP -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, FeishuAppSetting::class.java)
-                    FeishuAppUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    FeishuAppUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_URL_SCHEME -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, UrlSchemeSetting::class.java)
-                    UrlSchemeUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    UrlSchemeUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 TYPE_SOCKET -> {
                     val settingVo = Gson().fromJson(sender.jsonSetting, SocketSetting::class.java)
-                    SocketUtils.sendMsg(settingVo, msgInfo, rule, senderIndex, logId, msgId)
+                    SocketUtils.sendMsg(settingVo, sendMsgInfo, rule, senderIndex, logId, msgId)
                 }
 
                 else -> {
@@ -211,6 +232,28 @@ object SendUtils {
             updateLogs(logId, 0, e.message.toString())
             senderLogic(0, msgInfo, rule, senderIndex, msgId)
         }
+    }
+
+    //通道级内容打码：按规则的 sort 顺序依次替换，未绑定或全部禁用时原样返回
+    private fun applyMaskRules(sender: Sender, msgInfo: MsgInfo): MsgInfo {
+        if (sender.maskRuleIds.isEmpty()) return msgInfo
+
+        val maskRules = Core.maskRule.getEnabledByCsv(sender.maskRuleIds)
+        if (maskRules.isEmpty()) return msgInfo
+
+        var content = msgInfo.content
+        for (maskRule in maskRules) {
+            try {
+                content = maskRule.mask(content)
+            } catch (e: Exception) {
+                //正则在保存时已校验，这里拦的是替换文本引用了不存在的捕获组
+                Log.e(TAG, "打码规则[${maskRule.name}]生效失败: ${e.message}")
+            }
+        }
+        if (content == msgInfo.content) return msgInfo
+
+        Log.d(TAG, "通道[${sender.name}]已按 ${maskRules.size} 条打码规则处理内容")
+        return msgInfo.copy(content = content)
     }
 
     //发送通道执行逻辑：ALL=全部执行, UntilFail=失败即终止, UntilSuccess=成功即终止, Retry=重试发送

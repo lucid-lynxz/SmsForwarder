@@ -47,6 +47,18 @@ class BaseViewModelFactory(private val context: Context?) : ViewModelProvider.Fa
                 @Suppress("UNCHECKED_CAST")
                 return TaskViewModel(taskDao) as T
             }
+
+            modelClass.isAssignableFrom(TimeWindowViewModel::class.java) -> {
+                val timeWindowDao = AppDatabase.getInstance(context).timeWindowDao()
+                @Suppress("UNCHECKED_CAST")
+                return TimeWindowViewModel(timeWindowDao) as T
+            }
+
+            modelClass.isAssignableFrom(MaskRuleViewModel::class.java) -> {
+                val maskRuleDao = AppDatabase.getInstance(context).maskRuleDao()
+                @Suppress("UNCHECKED_CAST")
+                return MaskRuleViewModel(maskRuleDao) as T
+            }
         }
 
         throw IllegalArgumentException("Unknown ViewModel class")

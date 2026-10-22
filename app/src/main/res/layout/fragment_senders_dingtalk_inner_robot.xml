@@ -387,6 +387,10 @@
 
             </LinearLayout>
 
+            <include
+                android:id="@+id/include_sender_extra"
+                layout="@layout/include_sender_extra" />
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

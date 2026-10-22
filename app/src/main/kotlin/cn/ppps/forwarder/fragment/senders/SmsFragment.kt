@@ -66,6 +66,8 @@ class SmsFragment : BaseFragment<FragmentSendersSmsBinding?>(), View.OnClickList
     @AutoWired(name = KEY_SENDER_CLONE)
     var isClone: Boolean = false
 
+    private var mSenderExtra: SenderExtraHelper? = null
+
     override fun initArgs() {
         XRouter.getInstance().inject(this)
     }
@@ -86,6 +88,7 @@ class SmsFragment : BaseFragment<FragmentSendersSmsBinding?>(), View.OnClickList
      * 初始化控件
      */
     override fun initViews() {
+        mSenderExtra = SenderExtraHelper(binding!!.includeSenderExtra)
         //检查发短信权限
         XXPermissions.with(this)
             .permission(PermissionLists.getSendSmsPermission())
@@ -148,6 +151,7 @@ class SmsFragment : BaseFragment<FragmentSendersSmsBinding?>(), View.OnClickList
                 }
                 binding!!.etName.setText(sender.name)
                 binding!!.sbEnable.isChecked = sender.status == 1
+                mSenderExtra?.bind(sender)
                 val settingVo = Gson().fromJson(sender.jsonSetting, SmsSetting::class.java)
                 Log.d(TAG, settingVo.toString())
                 if (settingVo != null) {
@@ -219,6 +223,7 @@ class SmsFragment : BaseFragment<FragmentSendersSmsBinding?>(), View.OnClickList
                     val settingVo = checkSetting()
                     if (isClone) senderId = 0
                     val senderNew = Sender(senderId, senderType, name, Gson().toJson(settingVo), status)
+                    mSenderExtra?.applyTo(senderNew)
                     Log.d(TAG, senderNew.toString())
 
                     viewModel.insertOrUpdate(senderNew)

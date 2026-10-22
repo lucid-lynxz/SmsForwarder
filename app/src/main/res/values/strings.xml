@@ -1275,4 +1275,45 @@
     <string name="start_discovery">搜索设备</string>
     <string name="invalid_bluetooth_mac_address">蓝牙设备MAC地址无效，例如：AA:BB:CC:DD:EE:FF</string>
     <string name="auto_start_redmi"><![CDATA[红米手机：授权管理 -> 自启动管理 -> 允许应用自启动]]></string>
+    <!--允许转发时间窗口-->
+    <string name="menu_time_window">允许转发时间窗口</string>
+    <string name="add_time_window">添加时间窗口</string>
+    <string name="edit_time_window">编辑时间窗口</string>
+    <string name="delete_time_window_title">时间窗口操作确认</string>
+    <string name="delete_time_window_tips">绑定了该时间窗口的发送通道在窗口外不会转发任何消息，删除后这些通道将停止转发！\n\n确定删除该条时间窗口?</string>
+    <string name="delete_time_window_toast">该条时间窗口已经删除！</string>
+    <string name="time_window_name">窗口名称</string>
+    <string name="time_window_name_hint">例如：工作日上班时间</string>
+    <string name="sender_time_window">允许转发时间窗口</string>
+    <string name="sender_time_window_tips">仅在该窗口内允许此通道转发；选择「不限」则始终转发</string>
+    <string name="time_window_unlimited">不限</string>
+    <string name="time_window_day">允许转发的星期</string>
+    <string name="time_window_day_tips">不勾选视为每天</string>
+    <string name="time_window_period">允许转发的时间段</string>
+    <string name="time_window_period_tips">结束时间小于开始则跨天；相等则全天</string>
+    <string name="silent_time_window_period">当前时间不在允许转发时间窗口[%1$s]内，已跳过该通道</string>
+    <string name="sender_time_window_missing">通道绑定的时间窗口不存在，已跳过该通道</string>
+    <string name="time_window_all_days">每天</string>
+    <string name="time_window_all_day">全天</string>
+    <!--内容打码规则-->
+    <string name="menu_mask_rule">内容打码规则</string>
+    <string name="add_mask_rule">添加打码规则</string>
+    <string name="edit_mask_rule">编辑打码规则</string>
+    <string name="delete_mask_rule_title">打码规则操作确认</string>
+    <string name="delete_mask_rule_tips">绑定了该打码规则的发送通道将无法再对内容打码，删除后转发内容可能包含敏感信息！\n\n确定删除该条打码规则?</string>
+    <string name="delete_mask_rule_toast">该条打码规则已经删除！</string>
+    <string name="mask_rule_name">规则名称</string>
+    <string name="mask_rule_name_hint">例如：银行卡号打码</string>
+    <string name="mask_rule_regex">匹配正则</string>
+    <string name="mask_rule_regex_hint">例如：(\\d{3})\\d{4}(\\d{4})</string>
+    <string name="mask_rule_regex_tips">对发送内容做正则匹配，保存时校验语法；多条规则按生效顺序依次执行</string>
+    <string name="mask_rule_replacement">替换文本</string>
+    <string name="mask_rule_replacement_tips">留空表示直接删除匹配到的内容；可用 $1 引用分组，例如：$1****$2</string>
+    <string name="mask_rule_sort">生效顺序</string>
+    <string name="mask_rule_sort_tips">数字越小越先执行</string>
+    <string name="mask_rule_delete_matched">删除匹配内容</string>
+    <string name="mask_rule_missing">通道绑定的打码规则不存在，已忽略该规则</string>
+    <string name="invalid_mask_rule_regex">正则表达式无效，请检查语法，例如：(\\d{3})\\d{4}(\\d{4})</string>
+    <string name="sender_mask_rule">内容打码规则</string>
+    <string name="sender_mask_rule_tips">选中后转发前会按规则依次替换内容；不选则原文发送</string>
 </resources>

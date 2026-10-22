@@ -65,6 +65,8 @@ class UrlSchemeFragment : BaseFragment<FragmentSendersUrlSchemeBinding?>(), View
     @AutoWired(name = KEY_SENDER_CLONE)
     var isClone: Boolean = false
 
+    private var mSenderExtra: SenderExtraHelper? = null
+
     override fun initArgs() {
         XRouter.getInstance().inject(this)
     }
@@ -85,6 +87,7 @@ class UrlSchemeFragment : BaseFragment<FragmentSendersUrlSchemeBinding?>(), View
      * 初始化控件
      */
     override fun initViews() {
+        mSenderExtra = SenderExtraHelper(binding!!.includeSenderExtra)
         //测试按钮增加倒计时，避免重复点击
         mCountDownHelper = CountDownButtonHelper(binding!!.btnTest, SettingUtils.requestTimeout)
         mCountDownHelper!!.setOnCountDownListener(object : CountDownButtonHelper.OnCountDownListener {
@@ -123,6 +126,7 @@ class UrlSchemeFragment : BaseFragment<FragmentSendersUrlSchemeBinding?>(), View
                 }
                 binding!!.etName.setText(sender.name)
                 binding!!.sbEnable.isChecked = sender.status == 1
+                mSenderExtra?.bind(sender)
                 val settingVo = Gson().fromJson(sender.jsonSetting, UrlSchemeSetting::class.java)
                 Log.d(TAG, settingVo.toString())
                 if (settingVo != null) {
@@ -186,6 +190,7 @@ class UrlSchemeFragment : BaseFragment<FragmentSendersUrlSchemeBinding?>(), View
                     val settingVo = checkSetting()
                     if (isClone) senderId = 0
                     val senderNew = Sender(senderId, senderType, name, Gson().toJson(settingVo), status)
+                    mSenderExtra?.applyTo(senderNew)
                     Log.d(TAG, senderNew.toString())
 
                     viewModel.insertOrUpdate(senderNew)

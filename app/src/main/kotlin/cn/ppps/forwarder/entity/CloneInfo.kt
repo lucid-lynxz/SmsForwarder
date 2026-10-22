@@ -2,9 +2,11 @@ package cn.ppps.forwarder.entity
 
 import com.google.gson.annotations.SerializedName
 import cn.ppps.forwarder.database.entity.Frpc
+import cn.ppps.forwarder.database.entity.MaskRule
 import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.database.entity.Sender
 import cn.ppps.forwarder.database.entity.Task
+import cn.ppps.forwarder.database.entity.TimeWindow
 import java.io.Serializable
 
 data class CloneInfo(
@@ -28,4 +30,10 @@ data class CloneInfo(
 
     @SerializedName("task_list")
     var taskList: List<Task>? = null,
+
+    @SerializedName("time_window_list")
+    var timeWindowList: List<TimeWindow>? = null,
+
+    @SerializedName("mask_rule_list")
+    var maskRuleList: List<MaskRule>? = null,
 ) : Serializable

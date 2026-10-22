@@ -167,6 +167,8 @@ class HttpServerUtils private constructor() {
             cloneInfo.ruleList = Core.rule.getAllNonCache()
             cloneInfo.frpcList = Core.frpc.getAllNonCache()
             cloneInfo.taskList = Core.task.getAllNonCache()
+            cloneInfo.timeWindowList = Core.timeWindow.getAllNonCache()
+            cloneInfo.maskRuleList = Core.maskRule.getAllNonCache()
             return cloneInfo
         }
 
@@ -195,6 +197,7 @@ class HttpServerUtils private constructor() {
                 Core.sender.deleteAll()
                 if (!cloneInfo.senderList.isNullOrEmpty()) {
                     for (sender in cloneInfo.senderList!!) {
+                        if (sender.maskRuleIds.isNullOrEmpty()) sender.maskRuleIds = "" //兼容旧版本
                         Core.sender.insert(sender)
                     }
                 }
@@ -218,6 +221,20 @@ class HttpServerUtils private constructor() {
                 if (!cloneInfo.taskList.isNullOrEmpty()) {
                     for (task in cloneInfo.taskList!!) {
                         Core.task.insert(task)
+                    }
+                }
+                //允许转发时间窗口配置（旧版本备份没有该项，保留当前配置）
+                if (!cloneInfo.timeWindowList.isNullOrEmpty()) {
+                    Core.timeWindow.deleteAll()
+                    for (timeWindow in cloneInfo.timeWindowList!!) {
+                        Core.timeWindow.insert(timeWindow)
+                    }
+                }
+                //打码规则配置（旧版本备份没有该项，保留当前配置）
+                if (!cloneInfo.maskRuleList.isNullOrEmpty()) {
+                    Core.maskRule.deleteAll()
+                    for (maskRule in cloneInfo.maskRuleList!!) {
+                        Core.maskRule.insert(maskRule)
                     }
                 }
                 true

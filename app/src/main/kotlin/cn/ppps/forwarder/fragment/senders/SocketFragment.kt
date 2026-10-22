@@ -62,6 +62,8 @@ class SocketFragment : BaseFragment<FragmentSendersSocketBinding?>(), View.OnCli
     @AutoWired(name = KEY_SENDER_CLONE)
     var isClone: Boolean = false
 
+    private var mSenderExtra: SenderExtraHelper? = null
+
     override fun initArgs() {
         XRouter.getInstance().inject(this)
     }
@@ -82,6 +84,7 @@ class SocketFragment : BaseFragment<FragmentSendersSocketBinding?>(), View.OnCli
      * 初始化控件
      */
     override fun initViews() {
+        mSenderExtra = SenderExtraHelper(binding!!.includeSenderExtra)
         //测试按钮增加倒计时，避免重复点击
         mCountDownHelper = CountDownButtonHelper(binding!!.btnTest, SettingUtils.requestTimeout)
         mCountDownHelper!!.setOnCountDownListener(object : CountDownButtonHelper.OnCountDownListener {
@@ -120,6 +123,7 @@ class SocketFragment : BaseFragment<FragmentSendersSocketBinding?>(), View.OnCli
                 }
                 binding!!.etName.setText(sender.name)
                 binding!!.sbEnable.isChecked = sender.status == 1
+                mSenderExtra?.bind(sender)
                 val settingVo = Gson().fromJson(sender.jsonSetting, SocketSetting::class.java)
                 Log.d(TAG, settingVo.toString())
                 if (settingVo != null) {
@@ -204,6 +208,7 @@ class SocketFragment : BaseFragment<FragmentSendersSocketBinding?>(), View.OnCli
                     val settingVo = checkSetting()
                     if (isClone) senderId = 0
                     val senderNew = Sender(senderId, senderType, name, Gson().toJson(settingVo), status)
+                    mSenderExtra?.applyTo(senderNew)
                     Log.d(TAG, senderNew.toString())
 
                     viewModel.insertOrUpdate(senderNew)

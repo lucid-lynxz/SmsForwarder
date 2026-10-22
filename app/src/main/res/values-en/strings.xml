@@ -1244,4 +1244,45 @@
     <string name="start_discovery">Discovery</string>
     <string name="invalid_bluetooth_mac_address">Bluetooth Mac Address is invalid, eg. AA:BB:CC:DD:EE:FF</string>
     <string name="auto_start_redmi"><![CDATA[RedMi: Authorization Management -> Self-Start Management -> Allow Apps to Self-Start]]></string>
+    <!--Forwarding time window-->
+    <string name="menu_time_window">Forwarding Time Window</string>
+    <string name="add_time_window">Add Time Window</string>
+    <string name="edit_time_window">Edit Time Window</string>
+    <string name="delete_time_window_title">Time Window Operation Confirmation</string>
+    <string name="delete_time_window_tips">Senders bound to this time window never forward outside it, and deleting it will stop them forwarding!\n\nAre you sure to delete this time window?</string>
+    <string name="delete_time_window_toast">This time window has been deleted!</string>
+    <string name="time_window_name">Window Name</string>
+    <string name="time_window_name_hint">Eg. Weekday working hours</string>
+    <string name="sender_time_window">Forwarding Time Window</string>
+    <string name="sender_time_window_tips">This sender forwards only inside the window; select "Unlimited" to always forward</string>
+    <string name="time_window_unlimited">Unlimited</string>
+    <string name="time_window_day">Allowed Days</string>
+    <string name="time_window_day_tips">Nothing checked means every day</string>
+    <string name="time_window_period">Allowed Period</string>
+    <string name="time_window_period_tips">If the end time is less than the start time, it will span days; if it is equal, it will be all day</string>
+    <string name="silent_time_window_period">Current time is not inside forwarding time window [%1$s], this sender is skipped</string>
+    <string name="sender_time_window_missing">The time window bound to this sender is missing, this sender is skipped</string>
+    <string name="time_window_all_days">Every day</string>
+    <string name="time_window_all_day">All day</string>
+    <!--Content masking rules-->
+    <string name="menu_mask_rule">Content Masking Rules</string>
+    <string name="add_mask_rule">Add Masking Rule</string>
+    <string name="edit_mask_rule">Edit Masking Rule</string>
+    <string name="delete_mask_rule_title">Masking Rule Operation Confirmation</string>
+    <string name="delete_mask_rule_tips">Senders bound to this rule can no longer mask the content, and forwarded content may contain sensitive information after deletion!\n\nAre you sure to delete this masking rule?</string>
+    <string name="delete_mask_rule_toast">This masking rule has been deleted!</string>
+    <string name="mask_rule_name">Rule Name</string>
+    <string name="mask_rule_name_hint">e.g. Bank card number masking</string>
+    <string name="mask_rule_regex">Match Regex</string>
+    <string name="mask_rule_regex_hint">e.g. (\\d{3})\\d{4}(\\d{4})</string>
+    <string name="mask_rule_regex_tips">Regex applied to the forwarded content, validated on save; multiple rules run in order</string>
+    <string name="mask_rule_replacement">Replacement Text</string>
+    <string name="mask_rule_replacement_tips">Empty means deleting the matched content; use $1 to reference a group, e.g. $1****$2</string>
+    <string name="mask_rule_sort">Execution Order</string>
+    <string name="mask_rule_sort_tips">Smaller number runs first</string>
+    <string name="mask_rule_delete_matched">Delete matched content</string>
+    <string name="mask_rule_missing">The masking rule bound to this sender is missing, it is ignored</string>
+    <string name="invalid_mask_rule_regex">Invalid regular expression, please check the syntax, e.g.: (\\d{3})\\d{4}(\\d{4})</string>
+    <string name="sender_mask_rule">Content Masking Rules</string>
+    <string name="sender_mask_rule_tips">Selected rules rewrite the content before sending; select none to send it as is</string>
 </resources>
