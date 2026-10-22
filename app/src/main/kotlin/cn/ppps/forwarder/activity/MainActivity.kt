@@ -42,6 +42,7 @@ import cn.ppps.forwarder.utils.ACTION_START
 import cn.ppps.forwarder.utils.CommonUtils.Companion.restartApplication
 import cn.ppps.forwarder.utils.EVENT_LOAD_APP_LIST
 import cn.ppps.forwarder.utils.FRPC_LIB_DOWNLOAD_URL
+import cn.ppps.forwarder.utils.FRPC_LIB_SHA256
 import cn.ppps.forwarder.utils.FRPC_LIB_VERSION
 import cn.ppps.forwarder.utils.KEY_DEFAULT_SELECTION
 import cn.ppps.forwarder.utils.Log
@@ -70,6 +71,8 @@ import com.yarolegovich.slidingrootnav.SlidingRootNav
 import com.yarolegovich.slidingrootnav.SlidingRootNavBuilder
 import com.yarolegovich.slidingrootnav.callback.DragStateListener
 import java.io.File
+import java.io.FileInputStream
+import java.security.MessageDigest
 
 @Suppress("PrivatePropertyName", "unused", "DEPRECATION")
 class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemSelectedListener {
@@ -364,7 +367,6 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
             .build()
 
         XHttp.downLoad(downloadUrl)
-            .ignoreHttpsCert()
             .savePath(cacheDir.absolutePath)
             .execute(object : DownloadProgressCallBack<String?>() {
                 override fun onStart() {
@@ -387,6 +389,15 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
                     Log.d(TAG, "srcPath = $srcPath")
 
                     val srcFile = File(srcPath)
+                    val actual = sha256OfFile(srcFile)
+                    val expected = FRPC_LIB_SHA256[cpuAbi]
+                    if (expected == null || actual == null || !expected.equals(actual, ignoreCase = true)) {
+                        FileUtils.delete(srcFile)
+                        Log.e(TAG, "libgojni.so sha256 mismatch, expected = $expected, actual = $actual")
+                        XToastUtils.error(getString(R.string.frpclib_checksum_mismatch, actual ?: "unknown"))
+                        return
+                    }
+
                     val destFile = File("$libPath/libgojni.so")
                     FileUtils.moveFile(srcFile, destFile, null)
 
@@ -403,6 +414,25 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
                 }
             })
 
+    }
+
+    //计算文件sha256，用于校验下载的动态库
+    private fun sha256OfFile(file: File): String? {
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            FileInputStream(file).use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read <= 0) break
+                    digest.update(buffer, 0, read)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "sha256OfFile error: ${e.message}")
+            null
+        }
     }
 
 }

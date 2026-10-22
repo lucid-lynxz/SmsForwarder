@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  allowBackup=false 已禁用自动备份，这里再显式排除凭据与短信库，
+  防止 OEM ROM 或后续误改备份开关时把密钥/转发内容带出设备。
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="database"
+            path="sms_forwarder.db" />
+        <exclude
+            domain="sharedpref"
+            path="cn.ppps.forwarder.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="database"
+            path="sms_forwarder.db" />
+        <exclude
+            domain="sharedpref"
+            path="cn.ppps.forwarder.xml" />
+    </device-transfer>
+</data-extraction-rules>

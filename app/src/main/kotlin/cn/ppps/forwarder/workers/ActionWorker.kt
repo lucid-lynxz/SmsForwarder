@@ -207,8 +207,10 @@ class ActionWorker(context: Context, params: WorkerParameters) : CoroutineWorker
                         SettingUtils.locationPowerRequirement = settingsSetting.locationPowerRequirement
                         SettingUtils.locationMinInterval = settingsSetting.locationMinInterval
                         SettingUtils.locationMinDistance = settingsSetting.locationMinDistance
-                        SettingUtils.enableSmsCommand = settingsSetting.enableSmsCommand
                         SettingUtils.smsCommandSafePhone = settingsSetting.smsCommandSafePhone
+                        // 未设置安全手机号时不允许开启短信指令，任何人都能发短信操控设备
+                        SettingUtils.enableSmsCommand =
+                            settingsSetting.enableSmsCommand && settingsSetting.smsCommandSafePhone.isNotBlank()
                         SettingUtils.enableLoadAppList = settingsSetting.enableLoadAppList
                         SettingUtils.enableLoadUserAppList = settingsSetting.enableLoadUserAppList
                         SettingUtils.enableLoadSystemAppList = settingsSetting.enableLoadSystemAppList

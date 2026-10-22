@@ -724,6 +724,13 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     private fun switchEnableSmsCommand(sbEnableSmsCommand: SwitchButton, etSafePhone: EditText) {
         sbEnableSmsCommand.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
+            if (isChecked && etSafePhone.text.toString().isNullOrBlank()) {
+                SettingUtils.enableSmsCommand = false
+                sbEnableSmsCommand.isChecked = false
+                etSafePhone.visibility = View.VISIBLE
+                XToastUtils.error(getString(R.string.sms_command_safe_phone_required))
+                return@setOnCheckedChangeListener
+            }
             SettingUtils.enableSmsCommand = isChecked
             etSafePhone.visibility = if (isChecked) View.VISIBLE else View.GONE
             if (isChecked) {
@@ -765,7 +772,14 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
             override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable) {
-                SettingUtils.smsCommandSafePhone = etSafePhone.text.toString().trim().removeSuffix("\n")
+                val safePhone = etSafePhone.text.toString().trim().removeSuffix("\n")
+                SettingUtils.smsCommandSafePhone = safePhone
+                if (safePhone.isNullOrBlank() && SettingUtils.enableSmsCommand) {
+                    SettingUtils.enableSmsCommand = false
+                    sbEnableSmsCommand.isChecked = false
+                    etSafePhone.visibility = View.VISIBLE
+                    XToastUtils.error(getString(R.string.sms_command_safe_phone_required))
+                }
             }
         })
     }

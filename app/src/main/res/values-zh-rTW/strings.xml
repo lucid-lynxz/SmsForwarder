@@ -354,6 +354,7 @@
     <string name="forward_sms_tips">請授予讀取簡訊、通知類簡訊、發送簡訊等權限，關閉驗證碼保護</string>
     <string name="sms_command">簡訊指令</string>
     <string name="sms_command_tips">根據簡訊指令開關對應功能，指令格式：smsf#功能名#動作名</string>
+    <string name="sms_command_safe_phone_required">啟用簡訊指令必須先填寫安全手機號</string>
     <string name="close_to_earpiece_turn_off_screen">靠近聽筒關屏</string>
     <string name="close_to_earpiece_turn_off_screen_tips">手動關閉系統超時鎖屏後，蓋住聽筒即可關屏並保持喚醒狀態</string>
     <string name="safe_phone_tips">僅處理指定手機請求，多個手機以逗號分隔</string>
@@ -693,6 +694,7 @@
     <string name="frpclib_download_title">缺少 FrpcLib v%s 動態庫</string>
     <string name="frpclib_download_content">正在下載中，請稍後……</string>
     <string name="frpclib_version_mismatch">FrpcLib 版本不匹配</string>
+    <string name="frpclib_checksum_mismatch">動態庫校驗失敗，已丟棄下載內容。實際sha256：%1$s</string>
     <string name="page_not_found">頁面未找到！</string>
     <string name="data_error">數據出錯！</string>
     <string name="cannot_open_with_browser">無法使用瀏覽器打開</string>
@@ -927,6 +929,7 @@
     <string name="user_id">User ID</string>
     <string name="safety_measures">安全措施</string>
     <string name="safety_measures_tips">客戶端與服務端必須一致，強烈建議公網訪問時啟用加密</string>
+    <string name="server_security_required">請先選擇安全措施（校驗簽名/RSA/SM4）並填寫對應密鑰，才能啟動服務</string>
     <string name="safety_measures_none">不需要</string>
     <string name="safety_measures_sign">校驗簽名</string>
     <string name="safety_measures_rsa">RSA加密</string>

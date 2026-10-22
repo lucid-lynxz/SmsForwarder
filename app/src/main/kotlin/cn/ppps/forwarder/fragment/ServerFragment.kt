@@ -83,6 +83,11 @@ class ServerFragment : BaseFragment<FragmentServerBinding?>(), View.OnClickListe
 
         binding!!.scbServerAutorun.isChecked = HttpServerUtils.enableServerAutorun
         binding!!.scbServerAutorun.setOnCheckedChangeListener { _: SmoothCheckBox, isChecked: Boolean ->
+            if (isChecked && !HttpServerUtils.securityReady()) {
+                XToastUtils.error(getString(R.string.server_security_required))
+                binding!!.scbServerAutorun.isChecked = false
+                return@setOnCheckedChangeListener
+            }
             HttpServerUtils.enableServerAutorun = isChecked
         }
         //启动更新UI定时器
@@ -156,7 +161,9 @@ class ServerFragment : BaseFragment<FragmentServerBinding?>(), View.OnClickListe
                     binding!!.layoutSm4Key.visibility = View.VISIBLE
                 }
 
-                else -> {}
+                else -> {
+                    XToastUtils.warning(getString(R.string.server_security_required))
+                }
             }
             HttpServerUtils.safetyMeasures = safetyMeasures
         }
@@ -294,6 +301,11 @@ class ServerFragment : BaseFragment<FragmentServerBinding?>(), View.OnClickListe
     override fun onClick(v: View) {
         when (v.id) {
             R.id.btn_toggle_server -> {
+                val running = ServiceUtils.isServiceRunning("cn.ppps.forwarder.service.HttpServerService")
+                if (!running && !HttpServerUtils.securityReady()) {
+                    XToastUtils.error(getString(R.string.server_security_required))
+                    return
+                }
                 //检查权限是否获取
                 checkSendSmsPermission()
                 checkReadSmsPermission()

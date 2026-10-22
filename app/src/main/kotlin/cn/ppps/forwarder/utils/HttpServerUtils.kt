@@ -104,6 +104,16 @@ class HttpServerUtils private constructor() {
         //WOL历史记录
         var wolHistory: String by SharedPreference(SP_WOL_HISTORY, "")
 
+        //服务端安全措施是否就绪：未就绪时不允许启动，避免暴露无鉴权的远程控制口
+        fun securityReady(): Boolean {
+            return when (safetyMeasures) {
+                1 -> !TextUtils.isEmpty(serverSignKey)
+                2 -> !TextUtils.isEmpty(serverPrivateKey)
+                3 -> !TextUtils.isEmpty(serverSm4Key)
+                else -> false
+            }
+        }
+
         //计算签名
         fun calcSign(timestamp: String, signSecret: String): String {
             val stringToSign = "$timestamp\n" + signSecret

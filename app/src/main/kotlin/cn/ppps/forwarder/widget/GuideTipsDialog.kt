@@ -167,7 +167,6 @@ class GuideTipsDialog(context: Context?, tips: List<TipInfo>) :
         fun showTipsForce(context: Context?) {
             XHttp.get(getString(R.string.url_tips))
                 .keepJson(true)
-                .ignoreHttpsCert()
                 .timeStamp(true) //url自动追加时间戳，避免缓存
                 .execute(object : SimpleCallBack<String>() {
                     override fun onError(e: ApiException) {

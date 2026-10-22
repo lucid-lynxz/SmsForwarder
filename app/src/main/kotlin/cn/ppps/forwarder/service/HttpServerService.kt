@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 class HttpServerService : Service(), Server.ServerListener {
 
     private val TAG: String = HttpServerService::class.java.simpleName
+    private var started = false
     private val server by lazy {
         AndServer.webServer(this).port(HttpServerUtils.serverPort).listener(this).timeout(HTTP_SERVER_TIME_OUT, TimeUnit.SECONDS).build()
     }
@@ -29,12 +30,23 @@ class HttpServerService : Service(), Server.ServerListener {
         //纯客户端模式
         if (SettingUtils.enablePureClientMode) return
 
+        if (!HttpServerUtils.securityReady()) {
+            Log.e(TAG, "onCreate: 未配置安全措施或对应密钥，拒绝启动HttpServer")
+            stopSelf()
+            return
+        }
+
         Log.i(TAG, "onCreate: ")
+        started = true
         server.startup()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.i(TAG, "onStartCommand: ")
+        if (!started && HttpServerUtils.securityReady()) {
+            started = true
+            server.startup()
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -45,7 +57,10 @@ class HttpServerService : Service(), Server.ServerListener {
         if (SettingUtils.enablePureClientMode) return
 
         Log.i(TAG, "onDestroy: ")
-        server.shutdown()
+        if (started) {
+            started = false
+            server.shutdown()
+        }
     }
 
     override fun onException(e: Exception?) {

@@ -126,19 +126,22 @@ class SmsReceiver : BroadcastReceiver() {
         var safePhone = SettingUtils.smsCommandSafePhone
         Log.d(TAG, "safePhone = $safePhone")
 
-        if (!TextUtils.isEmpty(safePhone)) {
-            var isSafePhone = false
-            safePhone = safePhone.replace(";", ",").replace("；", ",").replace("，", ",").trim()
-            for (phone in safePhone.split(",")) {
-                if (!TextUtils.isEmpty(phone.trim()) && from.endsWith(phone.trim())) {
-                    isSafePhone = true
-                    break
-                }
+        if (TextUtils.isEmpty(safePhone)) {
+            Log.e(TAG, "smsCommandSafePhone is empty, refuse to execute sms command from = $from")
+            return
+        }
+
+        var isSafePhone = false
+        safePhone = safePhone.replace(";", ",").replace("；", ",").replace("，", ",").trim()
+        for (phone in safePhone.split(",")) {
+            if (!TextUtils.isEmpty(phone.trim()) && from.endsWith(phone.trim())) {
+                isSafePhone = true
+                break
             }
-            if (!isSafePhone) {
-                Log.d(TAG, "from = $from is not safePhone = $safePhone")
-                return
-            }
+        }
+        if (!isSafePhone) {
+            Log.d(TAG, "from = $from is not safePhone = $safePhone")
+            return
         }
 
         val smsCommand = message.substring(5)

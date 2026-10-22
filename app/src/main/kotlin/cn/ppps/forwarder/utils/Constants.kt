@@ -160,6 +160,14 @@ const val FRONT_CHANNEL_NAME = "SmsForwarder Foreground Service"
 //Frp内网穿透
 const val FRPC_LIB_DOWNLOAD_URL = "https://xupdate.ppps.cn/uploads/%s/%s/libgojni.so"
 const val FRPC_LIB_VERSION = "0.57.0"
+
+// libgojni.so 期望 sha256（取自 app/libs/frpclib.aar 内置库），下载内容不符则拒绝加载
+val FRPC_LIB_SHA256 = mapOf(
+    "armeabi-v7a" to "09a2e48dbffe09fe9f97189f25385e15a1d0fcaca4c0abea82acceaa4ad2fbec",
+    "arm64-v8a" to "0f1272a8e83340a4ece8f63a4964d937d3b1fa6da54c0d0eece0d92b1da228e3",
+    "x86" to "3ee3025c94ca5acd63dff2c3f7c7ccc9364b9b903cb7f025e71addb51836ea3e",
+    "x86_64" to "6d5f4e57ccff26698f357bea64fced71c3ed85f92a4a064c59950f2bc3bb1a73",
+)
 const val EVENT_FRPC_UPDATE_CONFIG = "EVENT_FRPC_UPDATE_CONFIG"
 const val EVENT_FRPC_DELETE_CONFIG = "EVENT_FRPC_DELETE_CONFIG"
 const val EVENT_FRPC_RUNNING_ERROR = "EVENT_FRPC_RUNNING_ERROR"

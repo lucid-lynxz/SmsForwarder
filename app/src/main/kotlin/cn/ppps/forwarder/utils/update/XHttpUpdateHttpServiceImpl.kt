@@ -26,7 +26,6 @@ class XHttpUpdateHttpServiceImpl : IUpdateHttpService {
         callBack: IUpdateHttpService.Callback,
     ) {
         XHttp.get(url)
-            .ignoreHttpsCert()
             .params(params)
             .keepJson(true)
             .execute(object : SimpleCallBack<String>() {
@@ -47,7 +46,6 @@ class XHttpUpdateHttpServiceImpl : IUpdateHttpService {
         callBack: IUpdateHttpService.Callback,
     ) {
         XHttp.post(url)
-            .ignoreHttpsCert()
             .upJson(JsonUtil.toJson(params))
             .keepJson(true)
             .execute(object : SimpleCallBack<String>() {
@@ -65,7 +63,6 @@ class XHttpUpdateHttpServiceImpl : IUpdateHttpService {
     override fun download(url: String, path: String, fileName: String, callback: DownloadCallback) {
         XHttpSDK.addRequest(
             url, XHttp.downLoad(url)
-                .ignoreHttpsCert()
                 .savePath(path)
                 .saveName(fileName)
                 .isUseBaseUrl(false)

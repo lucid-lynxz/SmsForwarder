@@ -353,6 +353,7 @@
     <string name="forward_sms_tips">Main switch, requires permissions to read and sned SMS messages, especially verification SMS texts.</string>
     <string name="sms_command">Sms Command</string>
     <string name="sms_command_tips">Open the HttpServer or FRPC by the SMS command</string>
+    <string name="sms_command_safe_phone_required">Set a safe phone number before enabling SMS commands</string>
     <string name="close_to_earpiece_turn_off_screen">Close to the earpiece and turn off the screen</string>
     <string name="close_to_earpiece_turn_off_screen_tips">After manually closing the system timeout lock screen, cover the earpiece to turn off the screen and maintain the wake-up state</string>
     <string name="safe_phone_tips">Only handle requests from specified phones</string>
@@ -692,6 +693,7 @@
     <string name="frpclib_download_title">Missing FrpcLib v%s</string>
     <string name="frpclib_download_content">Downloading, please wait…</string>
     <string name="frpclib_version_mismatch">FrpcLib version mismatch</string>
+    <string name="frpclib_checksum_mismatch">Checksum verification failed, downloaded file discarded. Actual sha256: %1$s</string>
     <string name="page_not_found">Page not found!</string>
     <string name="data_error">Data error!</string>
     <string name="cannot_open_with_browser">Can\'t open with browser</string>
@@ -926,6 +928,7 @@
     <string name="user_id">User ID</string>
     <string name="safety_measures">Safety Measures</string>
     <string name="safety_measures_tips">The client and server must be the same. It is strongly recommended to enable encryption when accessing the public network.</string>
+    <string name="server_security_required">Select a safety measure (Sign/RSA/SM4) and fill in the key before starting the server</string>
     <string name="safety_measures_none">None</string>
     <string name="safety_measures_sign">Sign</string>
     <string name="safety_measures_rsa">RSA Encrypt</string>
