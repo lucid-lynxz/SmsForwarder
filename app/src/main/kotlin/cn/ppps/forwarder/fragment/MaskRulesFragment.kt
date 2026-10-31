@@ -87,14 +87,16 @@ class MaskRulesFragment : BaseFragment<FragmentMaskRulesBinding?>(), MaskRulePag
     }
 
     override fun initListeners() {
+        //Room 活流：收集一次就会随数据库变动自动更新，不必进页面时播一遍下拉动画来拉数据
+        lifecycleScope.launch {
+            maskRuleFlow().collectLatest { adapter.submitData(it) }
+        }
+
         //下拉刷新
         binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
-            lifecycleScope.launch {
-                maskRuleFlow().collectLatest { adapter.submitData(it) }
-            }
+            adapter.refresh()
             refreshLayout.finishRefresh()
         }
-        binding!!.refreshLayout.autoRefresh()
     }
 
     override fun onItemClicked(view: View?, item: MaskRule) {

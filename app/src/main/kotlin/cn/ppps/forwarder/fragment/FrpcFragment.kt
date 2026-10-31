@@ -107,15 +107,16 @@ class FrpcFragment : BaseFragment<FragmentFrpcsBinding?>(), FrpcPagingAdapter.On
     }
 
     override fun initListeners() {
+        //Room 活流：收集一次就会随数据库变动自动更新，不必进页面时播一遍下拉动画来拉数据
+        lifecycleScope.launch {
+            viewModel.allFrpc.collectLatest { adapter.submitData(it) }
+        }
+
         //下拉刷新
         binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
-            //adapter.refresh()
-            lifecycleScope.launch {
-                viewModel.allFrpc.collectLatest { adapter.submitData(it) }
-            }
+            adapter.refresh()
             refreshLayout.finishRefresh()
         }
-        binding!!.refreshLayout.autoRefresh()
 
         //更新时间
         LiveEventBus.get(EVENT_FRPC_UPDATE_CONFIG, Frpc::class.java).observe(this) {

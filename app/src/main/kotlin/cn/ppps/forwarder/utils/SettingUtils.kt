@@ -166,6 +166,14 @@ class SettingUtils private constructor() {
 
         //是否忽略匿名设备
         var bluetoothIgnoreAnonymous: Boolean by SharedPreference(SP_BLUETOOTH_IGNORE_ANONYMOUS, true)
+
+        //上次停留的底部主页签
+        var lastTabMain: Int by SharedPreference(SP_LAST_TAB_MAIN, 0)
+
+        //上次停留的列表子页签
+        var lastTabLogs: Int by SharedPreference(SP_LAST_TAB_LOGS, 0)
+        var lastTabRules: Int by SharedPreference(SP_LAST_TAB_RULES, 0)
+        var lastTabSenders: Int by SharedPreference(SP_LAST_TAB_SENDERS, 0)
     }
 
     init {

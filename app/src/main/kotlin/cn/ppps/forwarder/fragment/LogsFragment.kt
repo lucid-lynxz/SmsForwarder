@@ -25,7 +25,9 @@ import cn.ppps.forwarder.database.viewmodel.BaseViewModelFactory
 import cn.ppps.forwarder.database.viewmodel.MsgViewModel
 import cn.ppps.forwarder.databinding.FragmentLogsBinding
 import cn.ppps.forwarder.utils.Log
+import cn.ppps.forwarder.utils.restoreSelectedTab
 import cn.ppps.forwarder.utils.SendUtils
+import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.XToastUtils
 import com.scwang.smartrefresh.layout.api.RefreshLayout
 import com.xuexiang.xaop.annotation.SingleClick
@@ -121,32 +123,42 @@ class LogsFragment : BaseFragment<FragmentLogsBinding?>(), MsgPagingAdapter.OnIt
         viewPool.setMaxRecycledViews(0, 10)
         binding!!.recyclerView.isFocusableInTouchMode = false
 
-        binding!!.tabBar.setTabTitles(getStringArray(R.array.type_param_option))
+        val tabTitles = getStringArray(R.array.type_param_option)
+        binding!!.tabBar.setTabTitles(tabTitles)
         binding!!.tabBar.setOnTabClickListener { _, position ->
             //XToastUtils.toast("点击了$title--$position")
-            currentType = when (position) {
-                1 -> "call"
-                2 -> "app"
-                else -> "sms"
-            }
+            SettingUtils.lastTabLogs = position
+            currentType = typeOf(position)
             initLogsFilterDialog(true)
             reloadData()
+        }
+        //回到上次停留的子页签；数据收集在 initListeners 里，这里只需先对齐类型
+        val savedTab = SettingUtils.lastTabLogs.coerceIn(0, tabTitles.size - 1)
+        currentType = typeOf(savedTab)
+        binding!!.tabBar.restoreSelectedTab(savedTab)
+    }
+
+    private fun typeOf(position: Int): String {
+        return when (position) {
+            1 -> "call"
+            2 -> "app"
+            else -> "sms"
         }
     }
 
     override fun initListeners() {
         binding!!.recyclerView.adapter = adapter
 
-        //下拉刷新
-        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
-            //adapter.refresh()
-            lifecycleScope.launch {
-                viewModel.setType(currentType).setFilter(currentFilter).allMsg.collectLatest { adapter.submitData(it) }
-            }
-            refreshLayout.finishRefresh()
+        //Room 活流：收集一次就会随数据库变动自动更新，不必进页面时播一遍下拉动画来拉数据
+        lifecycleScope.launch {
+            viewModel.setType(currentType).setFilter(currentFilter).allMsg.collectLatest { adapter.submitData(it) }
         }
 
-        binding!!.refreshLayout.autoRefresh()
+        //下拉刷新
+        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
+            adapter.refresh()
+            refreshLayout.finishRefresh()
+        }
     }
 
     override fun onItemClicked(view: View?, item: MsgAndLogs) {

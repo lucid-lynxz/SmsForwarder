@@ -57,6 +57,8 @@ import cn.ppps.forwarder.utils.TYPE_URL_SCHEME
 import cn.ppps.forwarder.utils.TYPE_WEBHOOK
 import cn.ppps.forwarder.utils.TYPE_WEWORK_AGENT
 import cn.ppps.forwarder.utils.TYPE_WEWORK_ROBOT
+import cn.ppps.forwarder.utils.restoreSelectedTab
+import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.XToastUtils
 import com.scwang.smartrefresh.layout.api.RefreshLayout
 import com.xuexiang.xaop.annotation.SingleClick
@@ -217,7 +219,8 @@ class SendersFragment : BaseFragment<FragmentSendersBinding?>(),
         titleBar!!.setLeftImageResource(R.drawable.ic_action_menu)
         titleBar!!.setTitle(R.string.menu_senders)
         titleBar!!.setLeftClickListener { getContainer()?.openMenu() }
-        titleBar!!.addAction(object : TitleBar.ImageAction(R.drawable.icon_api_contact_add) {
+        //不能用 icon_api_contact_add：它是 128dp 且填充色与标题栏同蓝，装上去看不见
+        titleBar!!.addAction(object : TitleBar.ImageAction(R.drawable.ic_string_mask) {
             @SingleClick
             override fun performAction(view: View) {
                 PageOption.to(MaskRulesFragment::class.java)
@@ -271,32 +274,40 @@ class SendersFragment : BaseFragment<FragmentSendersBinding?>(),
         binding!!.recyclerView.setRecycledViewPool(viewPool)
         viewPool.setMaxRecycledViews(0, 10)
 
-        binding!!.tabBar.setTabTitles(getStringArray(R.array.status_param_option))
+        val tabTitles = getStringArray(R.array.status_param_option)
+        binding!!.tabBar.setTabTitles(tabTitles)
         binding!!.tabBar.setOnTabClickListener { _, position ->
             //XToastUtils.toast("点击了$title--$position")
-            //currentStatus = statusValueArray[position]
-            currentStatus = 1 - position //注意：这里刚好相反，可以取巧
-            viewModel.setStatus(currentStatus)
-            adapter.refresh()
-            binding!!.recyclerView.scrollToPosition(0)
+            SettingUtils.lastTabSenders = position
+            applyTab(position)
         }
+        //回到上次停留的子页签
+        val savedTab = SettingUtils.lastTabSenders.coerceIn(0, tabTitles.size - 1)
+        applyTab(savedTab)
+        binding!!.tabBar.restoreSelectedTab(savedTab)
+    }
+
+    private fun applyTab(position: Int) {
+        //currentStatus = statusValueArray[position]
+        currentStatus = 1 - position //注意：这里刚好相反，可以取巧
+        viewModel.setStatus(currentStatus)
+        adapter.refresh()
+        binding!!.recyclerView.scrollToPosition(0)
     }
 
     override fun initListeners() {
         binding!!.recyclerView.adapter = adapter
 
-        //下拉刷新
-        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
-            refreshLayout.layout.postDelayed({
-                //adapter!!.refresh()
-                lifecycleScope.launch {
-                    viewModel.setStatus(currentStatus).allSenders.collectLatest { adapter.submitData(it) }
-                }
-                refreshLayout.finishRefresh()
-            }, 200)
+        //Room 活流：收集一次就会随数据库变动自动更新，不必进页面时播一遍下拉动画来拉数据
+        lifecycleScope.launch {
+            viewModel.setStatus(currentStatus).allSenders.collectLatest { adapter.submitData(it) }
         }
 
-        binding!!.refreshLayout.autoRefresh()
+        //下拉刷新
+        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
+            adapter.refresh()
+            refreshLayout.finishRefresh()
+        }
     }
 
     override fun onItemClicked(view: View?, item: Sender) {

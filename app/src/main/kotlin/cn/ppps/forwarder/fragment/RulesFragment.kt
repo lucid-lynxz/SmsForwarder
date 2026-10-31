@@ -18,6 +18,8 @@ import cn.ppps.forwarder.databinding.FragmentRulesBinding
 import cn.ppps.forwarder.utils.KEY_RULE_CLONE
 import cn.ppps.forwarder.utils.KEY_RULE_ID
 import cn.ppps.forwarder.utils.KEY_RULE_TYPE
+import cn.ppps.forwarder.utils.restoreSelectedTab
+import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.XToastUtils
 import com.scwang.smartrefresh.layout.api.RefreshLayout
 import com.xuexiang.xaop.annotation.SingleClick
@@ -84,35 +86,43 @@ class RulesFragment : BaseFragment<FragmentRulesBinding?>(), RulePagingAdapter.O
         binding!!.recyclerView.setRecycledViewPool(viewPool)
         viewPool.setMaxRecycledViews(0, 10)
 
-        binding!!.tabBar.setTabTitles(getStringArray(R.array.type_param_option))
+        val tabTitles = getStringArray(R.array.type_param_option)
+        binding!!.tabBar.setTabTitles(tabTitles)
         binding!!.tabBar.setOnTabClickListener { _, position ->
             //XToastUtils.toast("点击了$title--$position")
-            currentType = when (position) {
-                1 -> "call"
-                2 -> "app"
-                else -> "sms"
-            }
-            viewModel.setType(currentType)
-            adapter.refresh()
-            binding!!.recyclerView.scrollToPosition(0)
+            SettingUtils.lastTabRules = position
+            applyTab(position)
         }
+        //回到上次停留的子页签
+        val savedTab = SettingUtils.lastTabRules.coerceIn(0, tabTitles.size - 1)
+        applyTab(savedTab)
+        binding!!.tabBar.restoreSelectedTab(savedTab)
+    }
+
+    private fun applyTab(position: Int) {
+        currentType = when (position) {
+            1 -> "call"
+            2 -> "app"
+            else -> "sms"
+        }
+        viewModel.setType(currentType)
+        adapter.refresh()
+        binding!!.recyclerView.scrollToPosition(0)
     }
 
     override fun initListeners() {
         binding!!.recyclerView.adapter = adapter
 
-        //下拉刷新
-        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
-            refreshLayout.layout.postDelayed({
-                //adapter!!.refresh()
-                lifecycleScope.launch {
-                    viewModel.setType(currentType).allRules.collectLatest { adapter.submitData(it) }
-                }
-                refreshLayout.finishRefresh()
-            }, 200)
+        //Room 活流：收集一次就会随数据库变动自动更新，不必进页面时播一遍下拉动画来拉数据
+        lifecycleScope.launch {
+            viewModel.setType(currentType).allRules.collectLatest { adapter.submitData(it) }
         }
 
-        binding!!.refreshLayout.autoRefresh()
+        //下拉刷新
+        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
+            adapter.refresh()
+            refreshLayout.finishRefresh()
+        }
     }
 
     override fun onItemClicked(view: View?, item: Rule) {

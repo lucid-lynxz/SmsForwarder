@@ -168,22 +168,30 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
         WidgetUtils.addTabWithoutRipple(mTabLayout, getString(R.string.menu_senders), R.drawable.selector_icon_tabbar_senders)
         WidgetUtils.addTabWithoutRipple(mTabLayout, getString(R.string.menu_settings), R.drawable.selector_icon_tabbar_settings)
         WidgetUtils.setTabLayoutTextFont(mTabLayout)
-        switchPage(LogsFragment::class.java)
+        //先选中、后挂监听：select() 只负责高亮，避免回调里再切一次页面
+        val lastTab = SettingUtils.lastTabMain.coerceIn(POS_LOG, POS_SETTING)
+        mTabLayout.getTabAt(lastTab)?.select()
+        switchToTab(lastTab)
         mTabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 needToAppListFragment = false
+                SettingUtils.lastTabMain = tab.position
                 mAdapter.setSelected(tab.position)
-                when (tab.position) {
-                    POS_LOG -> switchPage(LogsFragment::class.java)
-                    POS_RULE -> switchPage(RulesFragment::class.java)
-                    POS_SENDER -> switchPage(SendersFragment::class.java)
-                    POS_SETTING -> switchPage(SettingsFragment::class.java)
-                }
+                switchToTab(tab.position)
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {}
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
+    }
+
+    private fun switchToTab(position: Int) {
+        when (position) {
+            POS_LOG -> switchPage(LogsFragment::class.java)
+            POS_RULE -> switchPage(RulesFragment::class.java)
+            POS_SENDER -> switchPage(SendersFragment::class.java)
+            POS_SETTING -> switchPage(SettingsFragment::class.java)
+        }
     }
 
     private fun initData() {
@@ -222,12 +230,14 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
         mSlidingRootNav = SlidingRootNavBuilder(this).withGravity(if (ResUtils.isRtl(this)) SlideGravity.RIGHT else SlideGravity.LEFT).withMenuOpened(false).withContentClickableWhenMenuOpened(false).withSavedState(savedInstanceState).withMenuLayout(R.layout.menu_left_drawer).inject()
         mLLMenu = mSlidingRootNav.layout.findViewById(R.id.ll_menu)
         ViewUtils.setVisibility(mLLMenu, false)
+        //侧边栏的勾选要和底部页签一致，否则重开app后侧边栏仍显示默认项
+        val lastTab = SettingUtils.lastTabMain.coerceIn(POS_LOG, POS_SETTING)
         mAdapter = DrawerAdapter(
             mutableListOf(
-                createItemFor(POS_LOG).setChecked(true),
-                createItemFor(POS_RULE),
-                createItemFor(POS_SENDER),
-                createItemFor(POS_SETTING),
+                createItemFor(POS_LOG).setChecked(lastTab == POS_LOG),
+                createItemFor(POS_RULE).setChecked(lastTab == POS_RULE),
+                createItemFor(POS_SENDER).setChecked(lastTab == POS_SENDER),
+                createItemFor(POS_SETTING).setChecked(lastTab == POS_SETTING),
                 SpaceItem(15),
                 createItemFor(POS_TASK),
                 createItemFor(POS_SERVER),
@@ -246,7 +256,7 @@ class MainActivity : BaseActivity<ActivityMainBinding?>(), DrawerAdapter.OnItemS
         list.isNestedScrollingEnabled = false
         list.layoutManager = LinearLayoutManager(this)
         list.adapter = mAdapter
-        mAdapter.setSelected(POS_LOG)
+        mAdapter.setSelected(lastTab)
         mSlidingRootNav.isMenuLocked = false
         mSlidingRootNav.layout.addDragStateListener(object : DragStateListener {
             override fun onDragStart() {

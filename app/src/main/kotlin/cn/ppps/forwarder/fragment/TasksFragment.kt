@@ -86,18 +86,16 @@ class TasksFragment : BaseFragment<FragmentTasksBinding?>(), TaskPagingAdapter.O
     override fun initListeners() {
         binding!!.recyclerView.adapter = adapter
 
-        //下拉刷新
-        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
-            refreshLayout.layout.postDelayed({
-                //adapter!!.refresh()
-                lifecycleScope.launch {
-                    viewModel.setType(currentType).allTasks.collectLatest { adapter.submitData(it) }
-                }
-                refreshLayout.finishRefresh()
-            }, 200)
+        //Room 活流：收集一次就会随数据库变动自动更新，不必进页面时播一遍下拉动画来拉数据
+        lifecycleScope.launch {
+            viewModel.setType(currentType).allTasks.collectLatest { adapter.submitData(it) }
         }
 
-        binding!!.refreshLayout.autoRefresh()
+        //下拉刷新
+        binding!!.refreshLayout.setOnRefreshListener { refreshLayout: RefreshLayout ->
+            adapter.refresh()
+            refreshLayout.finishRefresh()
+        }
     }
 
     override fun onItemClicked(view: View?, item: Task) {

@@ -44,6 +44,7 @@ import com.xuexiang.xui.widget.dialog.materialdialog.DialogAction
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog
 import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog.SingleButtonCallback
 import com.xuexiang.xui.widget.imageview.preview.PreviewBuilder
+import com.xuexiang.xui.widget.tabbar.EasyIndicator
 import com.xuexiang.xutil.XUtil
 import com.xuexiang.xutil.common.StringUtils
 import com.xuexiang.xutil.resource.ResUtils.getColor
@@ -424,4 +425,15 @@ class CommonUtils private constructor() {
     init {
         throw UnsupportedOperationException("u can't instantiate me...")
     }
+}
+
+/**
+ * 把页签控件的选中态回填到上次停留的位置。
+ * EasyIndicator 没有对外的高亮接口，只有走一次 onClick 才会同时刷新文字色和下划线位置；
+ * 页签之间还夹着分隔线，子节点下标和页签下标并不一致，所以按控件建好的 tag 找 TextView。
+ * 它会把点击回调再触发一遍，所以页面的点击处理逻辑需要保持幂等。下标 0 是控件默认态，无需回填。
+ */
+fun EasyIndicator.restoreSelectedTab(position: Int) {
+    if (position <= 0) return
+    post { tabContent.findViewWithTag<TextView>(position)?.let { onClick(it) } }
 }

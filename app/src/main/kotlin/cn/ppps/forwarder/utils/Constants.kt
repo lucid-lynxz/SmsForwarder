@@ -33,6 +33,12 @@ const val AUTO_CHECK_UPDATE = "auto_check_update"
 const val JOIN_PREVIEW_PROGRAM = "join_preview_program"
 const val IS_AGREE_PRIVACY_KEY = "is_agree_privacy_key"
 
+//界面记忆：上次停留的页签下标
+const val SP_LAST_TAB_MAIN = "last_tab_main"
+const val SP_LAST_TAB_LOGS = "last_tab_logs"
+const val SP_LAST_TAB_RULES = "last_tab_rules"
+const val SP_LAST_TAB_SENDERS = "last_tab_senders"
+
 //数据库
 const val DATABASE_NAME = "sms_forwarder.db"
 const val PACKAGE_NAME = "cn.ppps.forwarder"
