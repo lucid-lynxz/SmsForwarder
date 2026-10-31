@@ -15,7 +15,6 @@ class CallController {
     private val TAG: String = CallController::class.java.simpleName
 
     //远程查通话
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/query")
     fun query(@RequestBody bean: BaseRequest<CallQueryData>): List<CallInfo> {
         val callQueryData = bean.data

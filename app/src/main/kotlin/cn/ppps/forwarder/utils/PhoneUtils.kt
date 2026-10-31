@@ -46,6 +46,9 @@ class PhoneUtils private constructor() {
     companion object {
         const val TAG = "PhoneUtils"
 
+        //单次远程查询允许返回的最大联系人数，防止一次请求拉走整本通讯录
+        private const val MAX_CONTACT_QUERY_LIMIT = 200
+
         /** 获取 sim 卡槽数量，注意不是 sim 卡的数量。*/
         fun getSimSlotCount() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
             (App.context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager).activeModemCount
@@ -397,23 +400,23 @@ class PhoneUtils private constructor() {
                     return contactInfoList
                 }
 
-                if (cursor.moveToFirst()) {
-                    val displayNameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-                    val mobileNoIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                cursor.use {
+                    if (!it.moveToPosition(offset)) return contactInfoList
+                    val displayNameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                    val mobileNoIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                    val maxRows = if (limit in 1..MAX_CONTACT_QUERY_LIMIT) limit else MAX_CONTACT_QUERY_LIMIT
                     do {
-                        val contactInfo = ContactInfo(
-                            cursor.getString(displayNameIndex),  //姓名
-                            cursor.getString(mobileNoIndex),  //号码
+                        contactInfoList.add(
+                            ContactInfo(
+                                it.getString(displayNameIndex),  //姓名
+                                it.getString(mobileNoIndex),  //号码
+                            )
                         )
-                        Log.d(TAG, contactInfo.toString())
-                        contactInfoList.add(contactInfo)
-                        if (limit == 1) {
-                            cursor.close()
-                            return contactInfoList
-                        }
-                    } while (cursor.moveToNext())
-                    if (!cursor.isClosed) cursor.close()
+                        if (contactInfoList.size >= maxRows) break
+                    } while (it.moveToNext())
                 }
+                //只记录条数，避免整本通讯录逐条写入日志
+                Log.d(TAG, "getContactInfoList returned: " + contactInfoList.size)
             } catch (e: java.lang.Exception) {
                 Log.e(TAG, "getContactInfoList:", e)
             }

@@ -132,6 +132,36 @@
 
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.xuexiang.xui.widget.button.SmoothCheckBox
+                            android:id="@+id/scb_lan_access"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            app:scb_color_checked="@color/colorPrimary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:text="@string/allow_lan_access"
+                            android:textSize="@dimen/text_size_small" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:text="@string/allow_lan_access_tips"
+                            android:textSize="@dimen/text_size_mini"
+                            tools:ignore="SmallSp" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <com.xuexiang.xui.widget.button.shadowbutton.RippleShadowShadowButton

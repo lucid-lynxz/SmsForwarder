@@ -1,6 +1,6 @@
 # 安全加固
 
-一批针对「远程控制面」和「凭据外泄」的收紧改动。**其中三项对老用户是破坏性变更**，升级前请先看「升级检查清单」。
+一批针对「远程控制面」和「凭据外泄」的收紧改动。**其中多项对老用户是破坏性变更**（见下文标注），升级前请先看「升级检查清单」。
 
 ## 1. 下载通道恢复 TLS 证书校验
 
@@ -66,6 +66,28 @@
 
 - 唯一需要在**真机上复核**的移除项：`READ_LOGS`。侧边栏「日志抓取」用 `logcat -d` 且只过滤本 APP 自己的 tag，现代 Android 允许应用读取自身日志，理论上不受影响，但本次未实测。
 
+## 7. 远程查话簿：分页真正生效、单页封顶、不再逐条写日志
+
+`PhoneUtils.getContactInfoList()` 原来只把 `limit`/`offset` 当作两个特判（`limit == 1` 提前返回、`offset` 越界提前返回），循环本身会把游标**从头到尾全部取完**。于是 `POST /contact/query` 传 `{"page_size": 100000, "phone_number": "", "name": ""}` 一次就能拉走整本通讯录；同时循环内每条联系人都会 `Log.d` 打一次姓名+号码，logcat 里等于再存一份通讯录。
+
+现在：`moveToPosition(offset)` 定位起始行、取满 `limit` 条即停、单页最多 `MAX_CONTACT_QUERY_LIMIT = 200` 条（`page_size` 更大时按 200 截断，不报错），日志只打返回条数。
+
+- 影响：`page_size > 200` 的分页客户端需要改小页长翻页取；短信转发里按号码反查联系人（内部 limit 99）行为不变。
+
+## 8. CORS：默认拒绝任何跨域来源
+
+删掉 11 个接口上的 `@CrossOrigin(methods = [RequestMethod.POST])`。AndServer 在没有该注解时不会下发任何 `Access-Control-Allow-*` 头，且预检 `OPTIONS` 直接返回 403「Invalid CORS request」，所以其它网页的 JS 既读不到响应、也发不出 JSON 请求。另外在 `LoggerInterceptor` 里加了一道来源校验：请求带 `Origin` 且不等于本次请求的 `Host`（即非同源）就 403 拒绝并记一条 E 级日志。
+
+- 不受影响：APP 内的「主动控制·客户端」各页面、curl / 脚本 / 第三方 App 等原生 HTTP 客户端（它们不发 `Origin`）；由本机服务端自己托管的 web 客户端页面（同源）。
+- **破坏性变更**：把 web 客户端页面放在**另一台机器或另一个端口**、再用浏览器 JS 跨域调用手机接口的用法会被拦掉。解决办法：把该页面放进服务端页面的「自定义 web 客户端目录」，由手机自己同源提供。
+
+## 9. 服务端默认只监听 127.0.0.1
+
+`HttpServerService` 建服务时显式绑定监听地址：新增开关 `enableServerLanAccess`（服务端页面「允许局域网访问」，**默认关闭**）。关闭时绑 `127.0.0.1`，局域网里其它设备/其它电脑上的浏览器再也连不上这个远程控制口；打开时绑 `0.0.0.0` 恢复旧行为。切换开关时若服务正在运行会自动重启使其生效，运行状态文字与「复制」按钮给出的地址也会跟随开关显示 `127.0.0.1` 或局域网 IP，避免复制到连不通的地址。
+
+- 边界（必须知道）：**走 frpc 内网穿透时，公网侧的连接在手机上表现为本机 `127.0.0.1`**，所以回环绑定挡不住「通过 frpc 暴露到公网」这条路；那一路仍然只靠第 3 条的安全措施 + 密钥把关。frpc 用户不要因此以为关了局域网开关就等于公网不可达。
+- 纯客户端模式、以及本机 APP 自己访问 `http://127.0.0.1:5000` 均不受影响。
+
 ## 本次未处理（已知遗留，勿当作已加固）
 
 `MANAGE_EXTERNAL_STORAGE` 的文件访问方式、通道凭据在库中明文存储、配置导入时的 Java 原生反序列化路径（构造过的 `SmsForwarder.json` 仍是风险点）、以及全局允许明文 HTTP。
@@ -78,11 +100,15 @@
 4. 用抓包代理或自建更新源的：预期会看到 SSL 报错。
 5. 重新编译过 `frpclib.aar` 的：核对 `FRPC_LIB_VERSION` 与四个 sha256 是否同步更新。
 6. 删除升级前的旧 `.ab` / 云备份，并轮换服务端密钥。
+7. 从局域网其它设备/浏览器调用接口的：升级后去服务端页面勾选「允许局域网访问」（会自动重启服务）。
+8. 用外部浏览器页面跨域调接口的：把页面改放到「自定义 web 客户端目录」，或改用非浏览器的 HTTP 客户端。
+9. `page_size` 设得很大的远程查话簿脚本：单页最多 200 条，需要翻页取全量。
 
 ## 实现位置
 
 - `app/src/main/kotlin/cn/ppps/forwarder/utils/update/XHttpUpdateHttpServiceImpl.kt`、`.../widget/GuideTipsDialog.kt`
 - `.../activity/MainActivity.kt`（frpc 库下载与 `sha256OfFile()`）、`.../utils/Constants.kt`（`FRPC_LIB_SHA256` / `FRPC_LIB_VERSION`）
-- `.../utils/HttpServerUtils.kt`（`securityReady()`）、`.../service/HttpServerService.kt`、`.../fragment/ServerFragment.kt`
+- `.../utils/HttpServerUtils.kt`（`securityReady()`、`enableServerLanAccess`）、`.../service/HttpServerService.kt`、`.../fragment/ServerFragment.kt`
 - `.../receiver/SmsReceiver.kt`（安全手机号守卫）、`.../utils/SmsCommandUtils.kt`、`.../fragment/SettingsFragment.kt`、`.../workers/ActionWorker.kt`
 - `app/src/main/AndroidManifest.xml`、`app/src/main/res/xml/data_extraction_rules.xml`
+- `.../utils/PhoneUtils.kt`（`getContactInfoList` 分页与上限）、`.../server/controller/*.kt`（移除 `@CrossOrigin`）、`.../server/component/LoggerInterceptor.kt`（同源校验）

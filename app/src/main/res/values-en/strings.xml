@@ -929,6 +929,9 @@
     <string name="safety_measures">Safety Measures</string>
     <string name="safety_measures_tips">The client and server must be the same. It is strongly recommended to enable encryption when accessing the public network.</string>
     <string name="server_security_required">Select a safety measure (Sign/RSA/SM4) and fill in the key before starting the server</string>
+    <string name="allow_lan_access">Allow LAN access</string>
+    <string name="allow_lan_access_tips">When off only 127.0.0.1 on this device can access</string>
+    <string name="cors_origin_denied">Request origin rejected by cross-origin policy</string>
     <string name="safety_measures_none">None</string>
     <string name="safety_measures_sign">Sign</string>
     <string name="safety_measures_rsa">RSA Encrypt</string>

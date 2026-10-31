@@ -32,6 +32,14 @@ class LoggerInterceptor : HandlerInterceptor {
             Log.i(TAG, "Method: " + method.value())
             Log.i(TAG, "Param: $valueMap")
 
+            //跨域来源防护：浏览器脚本只能在同源页面里调用本机接口，其他 Origin 一律拒绝。
+            //原生 HTTP 客户端（curl / 其它 App）不发 Origin，因此不受影响。
+            val origin = request.getHeader("Origin")
+            if (!origin.isNullOrEmpty() && !isSameOrigin(origin, request.getHeader("Host"))) {
+                Log.e(TAG, "reject cross-origin request from = $origin to $httpPath")
+                throw HttpException(403, getString(R.string.cors_origin_denied))
+            }
+
             //判断是否开启该功能
             if (
                 (httpPath.startsWith("/clone") && !HttpServerUtils.enableApiClone)
@@ -54,5 +62,15 @@ class LoggerInterceptor : HandlerInterceptor {
             */
         }
         return false
+    }
+
+    //Origin 形如 http://host:port，与请求的 Host 头一致即视为同源
+    private fun isSameOrigin(origin: String, host: String?): Boolean {
+        if (host.isNullOrEmpty()) return false
+        val separator = origin.indexOf("://")
+        if (separator < 0) return false
+        val scheme = origin.substring(0, separator)
+        if (!scheme.equals("http", true) && !scheme.equals("https", true)) return false
+        return origin.substring(separator + 3).equals(host, ignoreCase = true)
     }
 }

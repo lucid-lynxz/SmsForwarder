@@ -18,7 +18,6 @@ class ConfigController {
     private val TAG: String = CloneController::class.java.simpleName
 
     //远程查配置
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/query")
     fun test(@RequestBody bean: BaseRequest<*>): ConfigData {
         Log.d(TAG, bean.data.toString())

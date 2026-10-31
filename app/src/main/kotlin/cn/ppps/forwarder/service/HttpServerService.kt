@@ -9,6 +9,7 @@ import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.SettingUtils
 import com.yanzhenjie.andserver.AndServer
 import com.yanzhenjie.andserver.Server
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 
 @Suppress("PrivatePropertyName")
@@ -17,7 +18,15 @@ class HttpServerService : Service(), Server.ServerListener {
     private val TAG: String = HttpServerService::class.java.simpleName
     private var started = false
     private val server by lazy {
-        AndServer.webServer(this).port(HttpServerUtils.serverPort).listener(this).timeout(HTTP_SERVER_TIME_OUT, TimeUnit.SECONDS).build()
+        //默认只监听回环地址，避免局域网内其它设备直连本机的远程控制接口
+        val listenAddress = if (HttpServerUtils.enableServerLanAccess) "0.0.0.0" else "127.0.0.1"
+        Log.i(TAG, "listen address: $listenAddress")
+        AndServer.webServer(this)
+            .inetAddress(InetAddress.getByName(listenAddress))
+            .port(HttpServerUtils.serverPort)
+            .listener(this)
+            .timeout(HTTP_SERVER_TIME_OUT, TimeUnit.SECONDS)
+            .build()
     }
 
     override fun onBind(p0: Intent?): IBinder? {

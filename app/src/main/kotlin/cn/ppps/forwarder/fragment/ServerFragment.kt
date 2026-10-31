@@ -90,6 +90,21 @@ class ServerFragment : BaseFragment<FragmentServerBinding?>(), View.OnClickListe
             }
             HttpServerUtils.enableServerAutorun = isChecked
         }
+        //允许局域网访问
+        binding!!.scbLanAccess.isChecked = HttpServerUtils.enableServerLanAccess
+        binding!!.scbLanAccess.setOnCheckedChangeListener { _: SmoothCheckBox, isChecked: Boolean ->
+            HttpServerUtils.enableServerLanAccess = isChecked
+            //监听地址在启动时确定，运行中切换需要重启服务端才生效
+            if (ServiceUtils.isServiceRunning("cn.ppps.forwarder.service.HttpServerService")) {
+                XToastUtils.info(getString(R.string.restarting_httpserver))
+                Intent(appContext, HttpServerService::class.java).also {
+                    appContext?.stopService(it)
+                    Thread.sleep(500)
+                    appContext?.startService(it)
+                }
+                refreshButtonText()
+            }
+        }
         //启动更新UI定时器
         handler.post(runnable)
 
@@ -429,7 +444,9 @@ class ServerFragment : BaseFragment<FragmentServerBinding?>(), View.OnClickListe
             binding!!.btnToggleServer.text = resources.getText(R.string.stop_server)
             binding!!.ivCopy.visibility = View.VISIBLE
             try {
-                inetAddress = NetworkUtils.getLocalInetAddress()
+                //未开放局域网时服务只监听回环地址，展示的地址需与实际一致
+                inetAddress = if (HttpServerUtils.enableServerLanAccess) NetworkUtils.getLocalInetAddress()
+                else InetAddress.getByName("127.0.0.1")
                 binding!!.tvServerTips.text = getString(R.string.http_server_running, inetAddress!!.hostAddress, HttpServerUtils.serverPort)
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -32,7 +32,7 @@ import cn.ppps.forwarder.utils.TAG_LIST
 @Database(
     entities = [Frpc::class, Msg::class, Logs::class, Rule::class, Sender::class, Task::class, TimeWindow::class, MaskRule::class],
     views = [LogsDetail::class],
-    version = 23,
+    version = 24,
     exportSchema = false
 )
 @TypeConverters(ConvertersDate::class)
@@ -120,6 +120,7 @@ custom_domains = smsf.demo.com
                     MIGRATION_20_21,
                     MIGRATION_21_22,
                     MIGRATION_22_23,
+                    MIGRATION_23_24,
                 )
 
             /*if (BuildConfig.DEBUG) {
@@ -513,8 +514,26 @@ CREATE TABLE "MaskRule" (
         private val MIGRATION_22_23 = object : Migration(22, 23) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("Alter table Rule add column time_window_ids TEXT NOT NULL DEFAULT '' ")
-                //Sender.time_window_id 不再映射到实体，Room 会忽略这个残留列。
-                //不重建 Sender 删列：改名后的旧表被 Logs/Rule 外键引用，DROP 时级联会连带清空转发日志。
+                //Sender.time_window_id 保留为残留列并仍在实体里映射（见 Sender.legacyTimeWindowId）：
+                //Room 不会因为多出一列而放过校验，且重建 Sender 删列会被 Logs/Rule 的外键级联清空转发日志。
+            }
+        }
+
+        //补齐残留列：直接装过 v23 全新安装包的数据库里没有这一列，而 v24 的实体要求它存在
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                var hasColumn = false
+                database.query("PRAGMA table_info(Sender)").use { cursor ->
+                    val nameIndex = cursor.getColumnIndex("name")
+                    while (nameIndex >= 0 && cursor.moveToNext()) {
+                        if (cursor.getString(nameIndex) == "time_window_id") {
+                            hasColumn = true
+                        }
+                    }
+                }
+                if (!hasColumn) {
+                    database.execSQL("Alter table Sender add column time_window_id INTEGER NOT NULL DEFAULT 0 ")
+                }
             }
         }
 

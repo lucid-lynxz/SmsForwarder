@@ -930,6 +930,9 @@
     <string name="safety_measures">安全措施</string>
     <string name="safety_measures_tips">客户端与服务端必须一致，强烈建议公网访问时启用加密</string>
     <string name="server_security_required">请先选择安全措施（校验签名/RSA/SM4）并填写对应密钥，才能启动服务</string>
+    <string name="allow_lan_access">允许局域网访问</string>
+    <string name="allow_lan_access_tips">关闭时仅本机127.0.0.1可访问</string>
+    <string name="cors_origin_denied">请求来源被跨域策略拒绝</string>
     <string name="safety_measures_none">不需要</string>
     <string name="safety_measures_sign">校验签名</string>
     <string name="safety_measures_rsa">RSA加密</string>

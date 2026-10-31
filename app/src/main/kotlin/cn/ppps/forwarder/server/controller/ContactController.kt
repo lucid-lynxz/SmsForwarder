@@ -20,7 +20,6 @@ class ContactController {
     private val TAG: String = ContactController::class.java.simpleName
 
     //远程查话簿
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/query")
     fun query(@RequestBody bean: BaseRequest<ContactQueryData>): MutableList<ContactInfo> {
         val contactQueryData = bean.data
@@ -32,7 +31,6 @@ class ContactController {
     }
 
     //远程加话簿
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/add")
     fun add(@RequestBody bean: BaseRequest<ContactInfo>): String {
         val contactData = bean.data

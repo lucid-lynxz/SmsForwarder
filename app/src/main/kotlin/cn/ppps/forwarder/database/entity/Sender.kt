@@ -37,6 +37,9 @@ data class Sender(
     @ColumnInfo(name = "time") var time: Date = Date(),
     //绑定的打码规则 id 列表（逗号分隔），空 = 不打码
     @ColumnInfo(name = "mask_rule_ids", defaultValue = "") var maskRuleIds: String = "",
+    //v21→v22 的遗留列：时间窗口绑定已移到 Rule.time_window_ids，本列不再参与任何逻辑。
+    //Room 校验要求表列与实体完全一致，多余的残留列同样会升级失败，所以必须保留映射。
+    @ColumnInfo(name = "time_window_id", defaultValue = "0") var legacyTimeWindowId: Long = 0,
 ) : Parcelable {
 
     val imageId: Int

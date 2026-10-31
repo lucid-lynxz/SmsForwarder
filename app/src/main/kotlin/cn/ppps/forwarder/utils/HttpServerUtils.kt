@@ -32,6 +32,9 @@ class HttpServerUtils private constructor() {
         //是否启用HttpServer开机自启
         var enableServerAutorun: Boolean by SharedPreference(SP_ENABLE_SERVER_AUTORUN, false)
 
+        //是否允许局域网访问服务端，关闭时只监听 127.0.0.1（frpc 隧道走本机回环，不受影响）
+        var enableServerLanAccess: Boolean by SharedPreference(SP_ENABLE_SERVER_LAN_ACCESS, false)
+
         //服务端签名密钥
         var serverSignKey: String by SharedPreference(SP_SERVER_SIGN_KEY, "")
 

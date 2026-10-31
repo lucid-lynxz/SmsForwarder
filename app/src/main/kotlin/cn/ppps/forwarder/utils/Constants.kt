@@ -224,6 +224,7 @@ const val HTTP_SUCCESS_CODE: Int = 200
 const val HTTP_FAILURE_CODE: Int = 500
 const val SP_SERVER_PORT = "server_port"
 const val SP_ENABLE_SERVER_AUTORUN = "enable_server_autorun"
+const val SP_ENABLE_SERVER_LAN_ACCESS = "enable_server_lan_access"
 const val SP_SERVER_SAFETY_MEASURES = "server_safety_measures"
 const val SP_SERVER_SIGN_KEY = "server_sign_key"
 const val SP_SERVER_TIME_TOLERANCE = "server_time_tolerance"

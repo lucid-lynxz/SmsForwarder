@@ -18,7 +18,6 @@ class WolController {
     private val TAG: String = WolController::class.java.simpleName
 
     //远程WOL
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/send")
     fun send(@RequestBody bean: BaseRequest<WolData>): String {
         val wolData = bean.data

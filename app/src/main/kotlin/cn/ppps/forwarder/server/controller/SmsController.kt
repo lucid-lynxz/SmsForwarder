@@ -23,7 +23,6 @@ class SmsController {
     private val TAG: String = SmsController::class.java.simpleName
 
     //发送短信
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/send")
     fun send(@RequestBody bean: BaseRequest<SmsSendData>): String {
         val smsSendData = bean.data
@@ -48,7 +47,6 @@ class SmsController {
     }
 
     //查询短信
-    @CrossOrigin(methods = [RequestMethod.POST])
     @PostMapping("/query")
     fun query(@RequestBody bean: BaseRequest<SmsQueryData>): List<SmsInfo> {
         val smsQueryData = bean.data
