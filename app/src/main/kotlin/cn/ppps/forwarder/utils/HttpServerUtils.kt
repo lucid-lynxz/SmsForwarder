@@ -241,6 +241,7 @@ class HttpServerUtils private constructor() {
                 if (!cloneInfo.timeWindowList.isNullOrEmpty()) {
                     Core.timeWindow.deleteAll()
                     for (timeWindow in cloneInfo.timeWindowList!!) {
+                        if (timeWindow.periods.isNullOrEmpty()) timeWindow.periods = "" //兼容旧版本
                         Core.timeWindow.insert(timeWindow)
                     }
                 }

@@ -13,9 +13,10 @@
 | --- | --- |
 | 窗口名称 | 仅要求非空，不校验重复（重名会让规则页的标签难以区分） |
 | 允许转发的星期 | 周一~周日多选；**一个都不勾 = 每天** |
-| 允许转发的时间段 | 起止时间；**结束早于开始 = 跨天**（如 22:00~02:00）；**结束等于开始 = 全天**（默认即 00:00~24:00） |
+| 允许转发的时间段 | 可添加**多个不重叠**的时段，命中任一时段即算在窗口内；每段为起止时间，**结束早于开始 = 跨天**（如 22:00~02:00）；**结束等于开始 = 全天**（默认即 00:00~24:00） |
 
-- 判定**含起点、不含终点**，因此 `08:30~12:00` 与 `12:00~18:00` 两个相邻窗口不会重叠。
+- 判定**含起点、不含终点**，因此 `09:30~11:50` 与 `11:50~13:30` 两个相邻时段不会重叠，也不留空隙。
+- 保存前会校验时段两两不重叠（按分钟覆盖判断，跨天时段同样参与），重叠时提示 `时间段之间存在重叠，请调整后再保存`；含「全天」段再加任何其它段就会被判重叠。
 - 时间选择器只提供 `00:00`~`24:00` 每 **10 分钟**一档，选不到 `08:35` 这类时间。
 - 窗口没有「启用」开关，也没有排序字段：存在即生效，列表按创建顺序（id）排列，不能手动调序。
 
@@ -39,13 +40,14 @@
 
 ## 升级说明
 
-数据库 v21→v22 创建 `TimeWindow` 表，v22→v23 给 `Rule` 增加 `time_window_ids`（逗号分隔的窗口 id 列表）。早期版本曾把窗口绑在**发送通道**上，现已改为绑在**转发规则**上；旧列 `Sender.time_window_id` 保留在库中但不再读写——minSdk 19 不支持 `DROP COLUMN`，而重建 `Sender` 表会因外键级联清空转发日志。
+数据库 v21→v22 创建 `TimeWindow` 表，v22→v23 给 `Rule` 增加 `time_window_ids`（逗号分隔的窗口 id 列表），v24→v25 给 `TimeWindow` 增加 `periods` 列（分号分隔的多个时段，形如 `09:30-11:50;13:30-18:30`）并把旧的单时段起止回填进去。早期版本曾把窗口绑在**发送通道**上，现已改为绑在**转发规则**上；旧列 `Sender.time_window_id` 保留在库中但不再读写——minSdk 19 不支持 `DROP COLUMN`，而重建 `Sender` 表会因外键级联清空转发日志。同理，旧列 `TimeWindow.period_start/period_end` 也保留在实体里，保存时镜像第一个时段，供旧备份与旧数据回落使用。
 
 ## 实现位置
 
-- `app/src/main/kotlin/cn/ppps/forwarder/database/entity/TimeWindow.kt`（字段与 `isInWindow()` 判定）
+- `app/src/main/kotlin/cn/ppps/forwarder/database/entity/TimeWindow.kt`（字段、`periodList`、`isInWindow()` 判定、`hasOverlappedPeriods()` 校验）
 - `.../database/entity/Rule.kt`（`time_window_ids`）
 - `.../utils/SendUtils.kt`（`timeWindowBlockReason()`）
 - `.../workers/SendWorker.kt`（逐规则拦截并写日志）
 - `.../fragment/TimeWindowsFragment.kt` / `TimeWindowEditFragment.kt` / `RulesEditFragment.kt`
-- `.../database/AppDatabase.kt`（`MIGRATION_21_22` / `MIGRATION_22_23`）
+- `app/src/main/res/layout/item_time_window_period.xml`（编辑页单个时段行）
+- `.../database/AppDatabase.kt`（`MIGRATION_21_22` / `MIGRATION_22_23` / `MIGRATION_24_25`）

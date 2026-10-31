@@ -1265,7 +1265,9 @@
     <string name="time_window_day">允许转发的星期</string>
     <string name="time_window_day_tips">不勾选视为每天</string>
     <string name="time_window_period">允许转发的时间段</string>
-    <string name="time_window_period_tips">结束时间小于开始则跨天；相等则全天</string>
+    <string name="time_window_period_tips">可添加多个不重叠时段；结束小于开始则跨天；相等则全天</string>
+    <string name="time_window_period_add">添加时段</string>
+    <string name="time_window_period_overlapped">时间段之间存在重叠，请调整后再保存</string>
     <string name="rule_time_window_blocked">当前时间不在允许转发时间窗口[%1$s]内，本规则已跳过</string>
     <string name="rule_time_window_missing">规则绑定的时间窗口不存在，本规则已跳过</string>
     <string name="time_window_missing">该时间窗口不存在，可能已被删除</string>
@@ -1290,6 +1292,19 @@
     <string name="mask_rule_delete_matched">删除匹配内容</string>
     <string name="mask_rule_missing">通道绑定的打码规则不存在，已忽略该规则</string>
     <string name="invalid_mask_rule_regex">正则表达式无效，请检查语法，例如：(\\d{3})\\d{4}(\\d{4})</string>
+    <string name="invalid_mask_rule_literal">请输入要匹配的文本</string>
     <string name="sender_mask_rule">内容打码规则</string>
     <string name="sender_mask_rule_tips">选中后转发前会按规则依次替换内容；不选则原文发送</string>
+    <string name="menu_string_mask">姓名马赛克</string>
+    <string name="add_string_mask">批量添加姓名</string>
+    <string name="string_mask_names">姓名列表</string>
+    <string name="string_mask_names_hint">每行一个姓名，也可用逗号、顿号、空格分隔</string>
+    <string name="string_mask_tips">保存后按拼音首字母生成替换文本（张三 → ZS），命中姓名时原样字面匹配；结果不准可在列表中逐条修改</string>
+    <string name="string_mask_preview">转换预览</string>
+    <string name="string_mask_no_valid_names">（没有可转换的姓名）</string>
+    <string name="string_mask_empty">请先输入姓名</string>
+    <string name="string_mask_added">已添加 %1$d 条，跳过 %2$d 条重复</string>
+    <string name="string_mask_literal">匹配文本</string>
+    <string name="string_mask_literal_tips">转发内容里出现该文本即被替换，不做正则解析</string>
+    <string name="string_mask_replacement_tips">留空表示直接删除匹配到的文本；按字面替换，不支持 $1 分组引用</string>
 </resources>

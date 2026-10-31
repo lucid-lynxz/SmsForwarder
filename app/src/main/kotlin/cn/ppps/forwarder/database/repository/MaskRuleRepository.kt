@@ -20,6 +20,8 @@ class MaskRuleRepository(private val maskRuleDao: MaskRuleDao) {
 
     fun getByIds(ids: List<Long>): List<MaskRule> = maskRuleDao.getByIds(ids).sortedBy { it.sort }
 
+    fun getByType(type: Int): List<MaskRule> = maskRuleDao.getByType(type)
+
     /**
      * 按通道配置的 id 列表取出生效的打码规则，顺序由规则自身的 sort 决定（链式替换对顺序敏感）
      */

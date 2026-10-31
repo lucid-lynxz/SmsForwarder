@@ -24,15 +24,23 @@ data class MaskRule(
     @ColumnInfo(name = "enable", defaultValue = "1") var enable: Int = STATUS_ON,
     @ColumnInfo(name = "sort", defaultValue = "0") var sort: Int = 0,
     @ColumnInfo(name = "time") var time: Date = Date(),
+    //0 = 正则匹配；1 = 字符串字面匹配，此时 regex 列存的是要原样查找的文本（姓名马赛克）
+    @ColumnInfo(name = "type", defaultValue = "0") var type: Int = MASK_TYPE_REGEX,
 ) : Parcelable {
 
     //replacement 留空即删除匹配到的内容；正则语法在保存时已校验过
     fun mask(content: String): String {
-        return content.replace(Regex(regex), replacement)
+        return if (type == MASK_TYPE_STRING) content.replace(regex, replacement)
+        else content.replace(Regex(regex), replacement)
     }
 
     fun buildDescription(): String {
         return "$regex → " + replacement.ifEmpty { getString(R.string.mask_rule_delete_matched) }
+    }
+
+    companion object {
+        const val MASK_TYPE_REGEX = 0
+        const val MASK_TYPE_STRING = 1
     }
 
 }

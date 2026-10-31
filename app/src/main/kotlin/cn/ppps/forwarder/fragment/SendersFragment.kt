@@ -15,6 +15,7 @@ import cn.ppps.forwarder.activity.MainActivity
 import cn.ppps.forwarder.adapter.SenderPagingAdapter
 import cn.ppps.forwarder.adapter.WidgetItemAdapter
 import cn.ppps.forwarder.core.BaseFragment
+import cn.ppps.forwarder.database.entity.MaskRule
 import cn.ppps.forwarder.database.entity.Sender
 import cn.ppps.forwarder.database.viewmodel.BaseViewModelFactory
 import cn.ppps.forwarder.database.viewmodel.SenderViewModel
@@ -35,6 +36,7 @@ import cn.ppps.forwarder.fragment.senders.UrlSchemeFragment
 import cn.ppps.forwarder.fragment.senders.WebhookFragment
 import cn.ppps.forwarder.fragment.senders.WeworkAgentFragment
 import cn.ppps.forwarder.fragment.senders.WeworkRobotFragment
+import cn.ppps.forwarder.utils.KEY_MASK_RULE_TYPE
 import cn.ppps.forwarder.utils.KEY_SENDER_CLONE
 import cn.ppps.forwarder.utils.KEY_SENDER_ID
 import cn.ppps.forwarder.utils.KEY_SENDER_TYPE
@@ -59,6 +61,7 @@ import cn.ppps.forwarder.utils.XToastUtils
 import com.scwang.smartrefresh.layout.api.RefreshLayout
 import com.xuexiang.xaop.annotation.SingleClick
 import com.xuexiang.xpage.annotation.Page
+import com.xuexiang.xpage.base.XPageActivity
 import com.xuexiang.xpage.base.XPageFragment
 import com.xuexiang.xpage.core.PageOption
 import com.xuexiang.xpage.enums.CoreAnim
@@ -214,6 +217,15 @@ class SendersFragment : BaseFragment<FragmentSendersBinding?>(),
         titleBar!!.setLeftImageResource(R.drawable.ic_action_menu)
         titleBar!!.setTitle(R.string.menu_senders)
         titleBar!!.setLeftClickListener { getContainer()?.openMenu() }
+        titleBar!!.addAction(object : TitleBar.ImageAction(R.drawable.icon_api_contact_add) {
+            @SingleClick
+            override fun performAction(view: View) {
+                PageOption.to(MaskRulesFragment::class.java)
+                    .setNewActivity(true)
+                    .putInt(KEY_MASK_RULE_TYPE, MaskRule.MASK_TYPE_STRING)
+                    .open((context as XPageActivity?)!!)
+            }
+        })
         titleBar!!.addAction(object : TitleBar.ImageAction(R.drawable.ic_mask_rule) {
             @SingleClick
             override fun performAction(view: View) {

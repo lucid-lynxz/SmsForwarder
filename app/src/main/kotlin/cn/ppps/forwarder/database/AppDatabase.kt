@@ -32,7 +32,7 @@ import cn.ppps.forwarder.utils.TAG_LIST
 @Database(
     entities = [Frpc::class, Msg::class, Logs::class, Rule::class, Sender::class, Task::class, TimeWindow::class, MaskRule::class],
     views = [LogsDetail::class],
-    version = 24,
+    version = 26,
     exportSchema = false
 )
 @TypeConverters(ConvertersDate::class)
@@ -121,6 +121,8 @@ custom_domains = smsf.demo.com
                     MIGRATION_21_22,
                     MIGRATION_22_23,
                     MIGRATION_23_24,
+                    MIGRATION_24_25,
+                    MIGRATION_25_26,
                 )
 
             /*if (BuildConfig.DEBUG) {
@@ -534,6 +536,26 @@ CREATE TABLE "MaskRule" (
                 if (!hasColumn) {
                     database.execSQL("Alter table Sender add column time_window_id INTEGER NOT NULL DEFAULT 0 ")
                 }
+            }
+        }
+
+        //时间窗口支持一天内多个不重叠时间段
+        private val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("Alter table TimeWindow add column periods TEXT NOT NULL DEFAULT '' ")
+                database.execSQL(
+                    """
+UPDATE TimeWindow SET periods = period_start || '-' || period_end
+WHERE periods = '' AND (period_start <> '' OR period_end <> '')
+""".trimIndent()
+                )
+            }
+        }
+
+        //打码规则区分正则匹配与字符串字面匹配（姓名马赛克走字面匹配）
+        private val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("Alter table MaskRule add column type INTEGER NOT NULL DEFAULT 0 ")
             }
         }
 

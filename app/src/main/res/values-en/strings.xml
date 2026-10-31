@@ -1263,8 +1263,10 @@
     <string name="rule_time_window_tips">After this rule matches, messages forward only when the current time falls in a checked window; check none to always forward</string>
     <string name="time_window_day">Allowed Days</string>
     <string name="time_window_day_tips">Nothing checked means every day</string>
-    <string name="time_window_period">Allowed Period</string>
-    <string name="time_window_period_tips">If the end time is less than the start time, it will span days; if it is equal, it will be all day</string>
+    <string name="time_window_period">Allowed Periods</string>
+    <string name="time_window_period_tips">Multiple non-overlapping periods are allowed; an end earlier than the start spans days, an equal one means all day</string>
+    <string name="time_window_period_add">Add period</string>
+    <string name="time_window_period_overlapped">Some periods overlap, please adjust them before saving</string>
     <string name="rule_time_window_blocked">Current time is not inside forwarding time window [%1$s], this rule is skipped</string>
     <string name="rule_time_window_missing">The time windows bound to this rule are missing, this rule is skipped</string>
     <string name="time_window_missing">This time window does not exist, it may have been deleted</string>
@@ -1289,6 +1291,19 @@
     <string name="mask_rule_delete_matched">Delete matched content</string>
     <string name="mask_rule_missing">The masking rule bound to this sender is missing, it is ignored</string>
     <string name="invalid_mask_rule_regex">Invalid regular expression, please check the syntax, e.g.: (\\d{3})\\d{4}(\\d{4})</string>
+    <string name="invalid_mask_rule_literal">Please enter the text to match</string>
     <string name="sender_mask_rule">Content Masking Rules</string>
     <string name="sender_mask_rule_tips">Selected rules rewrite the content before sending; select none to send it as is</string>
+    <string name="menu_string_mask">Name Masking</string>
+    <string name="add_string_mask">Add Names in Batch</string>
+    <string name="string_mask_names">Name List</string>
+    <string name="string_mask_names_hint">One name per line, or separate names with commas / spaces</string>
+    <string name="string_mask_tips">Each name is replaced by its pinyin initials (张三 → ZS) with plain text matching; edit any result in the list if it is not right</string>
+    <string name="string_mask_preview">Preview</string>
+    <string name="string_mask_no_valid_names">(no name to convert)</string>
+    <string name="string_mask_empty">Please enter names first</string>
+    <string name="string_mask_added">Added %1$d, skipped %2$d duplicates</string>
+    <string name="string_mask_literal">Text to match</string>
+    <string name="string_mask_literal_tips">Replaces this exact text in the content, no regular expression</string>
+    <string name="string_mask_replacement_tips">Leave empty to delete the matched text; literal replace does not expand $1 group references</string>
 </resources>

@@ -40,6 +40,12 @@ interface MaskRuleDao {
     @Query("SELECT * FROM MaskRule ORDER BY sort ASC, id ASC")
     fun pagingSource(): PagingSource<Int, MaskRule>
 
+    @Query("SELECT * FROM MaskRule WHERE type = :type ORDER BY sort ASC, id ASC")
+    fun pagingSourceByType(type: Int): PagingSource<Int, MaskRule>
+
+    @Query("SELECT * FROM MaskRule WHERE type = :type ORDER BY sort ASC, id ASC")
+    fun getByType(type: Int): List<MaskRule>
+
     @Query("SELECT * FROM MaskRule ORDER BY sort ASC, id ASC")
     fun getAll(): Single<List<MaskRule>>
 

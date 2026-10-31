@@ -37,6 +37,9 @@ class MaskRuleEditFragment : BaseFragment<FragmentMaskRuleEditBinding?>(), View.
     @AutoWired(name = KEY_MASK_RULE_ID)
     var maskRuleId: Long = 0
 
+    //字符串类型（姓名马赛克）按字面匹配，界面文案与校验都要跟着切换
+    private var maskRuleType: Int = MaskRule.MASK_TYPE_REGEX
+
     override fun initArgs() {
         XRouter.getInstance().inject(this)
     }
@@ -67,11 +70,22 @@ class MaskRuleEditFragment : BaseFragment<FragmentMaskRuleEditBinding?>(), View.
             return
         }
         titleBar?.setSubTitle(getString(R.string.edit_mask_rule) + ": " + maskRule.name)
+        maskRuleType = maskRule.type
+        applyTypeLabels()
         binding!!.etName.setText(maskRule.name)
         binding!!.etRegex.setText(maskRule.regex)
         binding!!.etReplacement.setText(maskRule.replacement)
         binding!!.etSort.setText(maskRule.sort.toString())
         binding!!.sbEnable.isChecked = maskRule.enable == STATUS_ON
+    }
+
+    private fun applyTypeLabels() {
+        if (!isStringMask()) return
+        binding!!.tvRegex.setText(R.string.string_mask_literal)
+        binding!!.tvRegexTips.setText(R.string.string_mask_literal_tips)
+        binding!!.etRegex.setHint(R.string.string_mask_literal)
+        //字面替换没有分组，$1 不会被展开，避免出现误导性的提示
+        binding!!.tvReplacementTips.setText(R.string.string_mask_replacement_tips)
     }
 
     override fun initListeners() {
@@ -130,13 +144,15 @@ class MaskRuleEditFragment : BaseFragment<FragmentMaskRuleEditBinding?>(), View.
         }
         val regex = binding!!.etRegex.text.toString().trim()
         if (TextUtils.isEmpty(regex)) {
-            throw Exception(getString(R.string.invalid_mask_rule_regex))
+            throw Exception(getString(if (isStringMask()) R.string.invalid_mask_rule_literal else R.string.invalid_mask_rule_regex))
         }
         //正则写错时替换会直接抛异常，这里提前拦住，避免发送时才失败
-        try {
-            Regex(regex)
-        } catch (e: Exception) {
-            throw Exception(getString(R.string.invalid_mask_rule_regex) + ": " + e.message)
+        if (!isStringMask()) {
+            try {
+                Regex(regex)
+            } catch (e: Exception) {
+                throw Exception(getString(R.string.invalid_mask_rule_regex) + ": " + e.message)
+            }
         }
         val replacement = binding!!.etReplacement.text.toString()
         val sort = binding!!.etSort.text.toString().trim().toIntOrNull() ?: 0
@@ -147,8 +163,11 @@ class MaskRuleEditFragment : BaseFragment<FragmentMaskRuleEditBinding?>(), View.
             replacement,
             if (binding!!.sbEnable.isChecked) STATUS_ON else STATUS_OFF,
             sort,
-            Date()
+            Date(),
+            maskRuleType
         )
     }
+
+    private fun isStringMask(): Boolean = maskRuleType == MaskRule.MASK_TYPE_STRING
 
 }

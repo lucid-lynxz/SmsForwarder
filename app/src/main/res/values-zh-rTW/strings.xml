@@ -1266,7 +1266,9 @@
     <string name="time_window_day">允許轉發的星期</string>
     <string name="time_window_day_tips">不勾選視為每天</string>
     <string name="time_window_period">允許轉發的時間段</string>
-    <string name="time_window_period_tips">結束時間小於開始則跨天；相等則全天</string>
+    <string name="time_window_period_tips">可添加多個不重疊時段；結束小於開始則跨天；相等則全天</string>
+    <string name="time_window_period_add">添加時段</string>
+    <string name="time_window_period_overlapped">時間段之間存在重疊，請調整後再儲存</string>
     <string name="rule_time_window_blocked">當前時間不在允許轉發時間窗口[%1$s]內，本規則已跳過</string>
     <string name="rule_time_window_missing">規則綁定的時間窗口不存在，本規則已跳過</string>
     <string name="time_window_missing">該時間窗口不存在，可能已被刪除</string>

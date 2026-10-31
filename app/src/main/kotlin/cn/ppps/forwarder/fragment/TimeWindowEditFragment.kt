@@ -1,13 +1,16 @@
 package cn.ppps.forwarder.fragment
 
+import android.annotation.SuppressLint
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.fragment.app.viewModels
 import cn.ppps.forwarder.R
 import cn.ppps.forwarder.core.BaseFragment
 import cn.ppps.forwarder.core.Core
+import cn.ppps.forwarder.database.entity.TimePeriod
 import cn.ppps.forwarder.database.entity.TimeWindow
 import cn.ppps.forwarder.database.viewmodel.BaseViewModelFactory
 import cn.ppps.forwarder.database.viewmodel.TimeWindowViewModel
@@ -37,8 +40,8 @@ class TimeWindowEditFragment : BaseFragment<FragmentTimeWindowEditBinding?>(), V
     private val viewModel by viewModels<TimeWindowViewModel> { BaseViewModelFactory(context) }
 
     private val mTimeOption = DataProvider.timePeriodOption
-    private var periodStartIndex = 0
-    private var periodEndIndex = mTimeOption.size - 1
+    //新建窗口默认「全天」，与旧版单时间段默认一致
+    private val periodList: MutableList<TimePeriod> = mutableListOf(TimePeriod(mTimeOption.first(), mTimeOption.last()))
 
     @JvmField
     @AutoWired(name = KEY_TIME_WINDOW_ID)
@@ -59,7 +62,7 @@ class TimeWindowEditFragment : BaseFragment<FragmentTimeWindowEditBinding?>(), V
     }
 
     override fun initViews() {
-        binding!!.tvPeriod.text = mTimeOption[periodStartIndex] + " ~ " + mTimeOption[periodEndIndex]
+        renderPeriods()
 
         if (timeWindowId <= 0) { //新增
             titleBar?.setSubTitle(getString(R.string.add_time_window))
@@ -77,9 +80,9 @@ class TimeWindowEditFragment : BaseFragment<FragmentTimeWindowEditBinding?>(), V
         }
         titleBar?.setSubTitle(getString(R.string.edit_time_window) + ": " + timeWindow.name)
         binding!!.etName.setText(timeWindow.name)
-        periodStartIndex = mTimeOption.indexOf(timeWindow.periodStart).takeIf { it >= 0 } ?: 0
-        periodEndIndex = mTimeOption.indexOf(timeWindow.periodEnd).takeIf { it >= 0 } ?: mTimeOption.size - 1
-        binding!!.tvPeriod.text = mTimeOption[periodStartIndex] + " ~ " + mTimeOption[periodEndIndex]
+        periodList.clear()
+        periodList.addAll(timeWindow.periodList)
+        renderPeriods()
 
         val days = timeWindow.dayOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
         getDayCheckBoxMap().forEach { (day, checkBox) ->
@@ -87,28 +90,52 @@ class TimeWindowEditFragment : BaseFragment<FragmentTimeWindowEditBinding?>(), V
         }
     }
 
+    @SuppressLint("SetTextI18n")
+    private fun renderPeriods() {
+        val container = binding!!.llPeriods
+        container.removeAllViews()
+        periodList.forEachIndexed { index, period ->
+            val view = LayoutInflater.from(context).inflate(R.layout.item_time_window_period, container, false)
+            view.findViewById<TextView>(R.id.tv_period).text = period.toString()
+            view.findViewById<View>(R.id.btn_period).setOnClickListener { showPeriodPicker(index) }
+            val delButton = view.findViewById<View>(R.id.btn_period_del)
+            //至少保留一个时间段，全部删完等价于不限时段，容易误操作
+            delButton.visibility = if (periodList.size > 1) View.VISIBLE else View.INVISIBLE
+            delButton.setOnClickListener {
+                periodList.removeAt(index)
+                renderPeriods()
+            }
+            container.addView(view)
+        }
+    }
+
+    private fun showPeriodPicker(index: Int) {
+        val period = periodList[index]
+        val startIndex = mTimeOption.indexOf(period.start).takeIf { it >= 0 } ?: 0
+        val endIndex = mTimeOption.indexOf(period.end).takeIf { it >= 0 } ?: mTimeOption.size - 1
+        OptionsPickerBuilder(context, OnOptionsSelectListener { _: View?, options1: Int, options2: Int, _: Int ->
+            periodList[index] = TimePeriod(mTimeOption[options1], mTimeOption[options2])
+            renderPeriods()
+            return@OnOptionsSelectListener false
+        }).setTitleText(getString(R.string.select_time_period)).setSelectOptions(startIndex, endIndex).build<Any>().also {
+            it.setNPicker(mTimeOption, mTimeOption)
+            it.show()
+        }
+    }
+
     override fun initListeners() {
         binding!!.btnDel.setOnClickListener(this)
         binding!!.btnSave.setOnClickListener(this)
-        binding!!.btnPeriod.setOnClickListener(this)
+        binding!!.btnPeriodAdd.setOnClickListener(this)
     }
 
     @SingleClick
     override fun onClick(v: View) {
         try {
             when (v.id) {
-                R.id.btn_period -> {
-                    OptionsPickerBuilder(context, OnOptionsSelectListener { _: View?, options1: Int, options2: Int, _: Int ->
-                        periodStartIndex = options1
-                        periodEndIndex = options2
-                        val txt = mTimeOption[options1] + " ~ " + mTimeOption[options2]
-                        binding!!.tvPeriod.text = txt
-                        XToastUtils.toast(txt)
-                        return@OnOptionsSelectListener false
-                    }).setTitleText(getString(R.string.select_time_period)).setSelectOptions(periodStartIndex, periodEndIndex).build<Any>().also {
-                        it.setNPicker(mTimeOption, mTimeOption)
-                        it.show()
-                    }
+                R.id.btn_period_add -> {
+                    periodList.add(TimePeriod(mTimeOption.first(), mTimeOption.last()))
+                    renderPeriods()
                 }
 
                 R.id.btn_del -> {
@@ -156,13 +183,17 @@ class TimeWindowEditFragment : BaseFragment<FragmentTimeWindowEditBinding?>(), V
         if (TextUtils.isEmpty(name)) {
             throw Exception(getString(R.string.invalid_name))
         }
+        if (TimeWindow.hasOverlappedPeriods(periodList)) {
+            throw Exception(getString(R.string.time_window_period_overlapped))
+        }
         val days = getDayCheckBoxMap().filter { it.value.isChecked }.toList().map { it.first }.joinToString(",")
         return TimeWindow(
             timeWindowId,
             name,
             days,
-            mTimeOption[periodStartIndex],
-            mTimeOption[periodEndIndex],
+            periodList.first().start,
+            periodList.first().end,
+            TimeWindow.periodsToString(periodList),
             Date()
         )
     }

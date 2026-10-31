@@ -196,6 +196,9 @@ const val KEY_DEFAULT_SELECTION = "key_default_selection"
 
 const val KEY_TIME_WINDOW_ID = "key_time_window_id"
 const val KEY_MASK_RULE_ID = "key_mask_rule_id"
+//打码规则列表的类型过滤：-1 全部，其余取 MaskRule.MASK_TYPE_*
+const val KEY_MASK_RULE_TYPE = "key_mask_rule_type"
+const val MASK_RULE_TYPE_ALL = -1
 
 //转发规则测试弹窗填写内容缓存（key需拼接ruleType后缀区分）
 const val SP_RULE_TEST_SIM_SLOT = "rule_test_sim_slot_"

@@ -21,8 +21,21 @@ class MaskRuleViewModel(private val dao: MaskRuleDao) : ViewModel() {
         )
     ) { dao.pagingSource() }.flow.cachedIn(viewModelScope)
 
+    //姓名马赛克列表只看字符串类型规则
+    fun maskRuleByType(type: Int): Flow<PagingData<MaskRule>> = Pager(
+        config = PagingConfig(
+            pageSize = 10,
+            enablePlaceholders = false,
+            initialLoadSize = 10
+        )
+    ) { dao.pagingSourceByType(type) }.flow
+
     fun insert(maskRule: MaskRule) = ioThread {
         dao.insert(maskRule)
+    }
+
+    fun insertAll(maskRules: List<MaskRule>) = ioThread {
+        maskRules.forEach { dao.insert(it) }
     }
 
     fun update(maskRule: MaskRule) = ioThread {
