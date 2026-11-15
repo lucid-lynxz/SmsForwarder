@@ -986,6 +986,25 @@
     <string name="min_interval">最小时间间隔</string>
     <string name="min_distance">最小距离间隔</string>
     <string name="meter">米</string>
+    <string name="append_location_enable">转发消息附带位置</string>
+    <string name="append_location_enable_tips">只给下方所选应用的通知在转发内容末尾追加最新定位；仅读取定位缓存，不额外耗电</string>
+    <string name="append_location_apps_title">选择附带位置的应用</string>
+    <string name="append_location_apps_select">选择应用</string>
+    <string name="append_location_apps_empty">未选择应用</string>
+    <string name="append_location_apps_selected">已选 %1$d 个：%2$s</string>
+    <string name="append_location_distance_label">位置变化阈值</string>
+    <string name="append_location_interval_label">透出间隔</string>
+    <string name="append_location_throttle_tips">移动超过阈值、或距上次透出超过间隔时才再次附带位置；任一填 0 表示每条都带</string>
+
+    <string name="append_location_coord_line">经纬度: %1$s,%2$s</string>
+    <string name="append_location_address_line">地址: %1$s</string>
+    <string name="append_location_time_line">采集于 %1$s（%2$s）</string>
+    <string name="append_location_time_only">采集于 %1$s</string>
+    <string name="append_location_ago_now">刚刚采集</string>
+    <string name="append_location_ago_minute">%1$d 分钟前</string>
+    <string name="append_location_ago_hour">%1$d 小时前</string>
+    <string name="append_location_ago_day">%1$d 天前</string>
+    <string name="append_location_unready">[位置] 定位未就绪：请确认系统定位已打开，且已开启「GPS定位服务」</string>
     <string name="uid">UID</string>
 
     <string name="enable_bluetooth">发现蓝牙设备服务</string>

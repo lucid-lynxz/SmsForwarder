@@ -644,7 +644,7 @@
                                     android:layout_marginStart="5dp"
                                     android:layout_weight="1"
                                     android:padding="0dp"
-                                    app:xsb_max="120"
+                                    app:xsb_max="600"
                                     app:xsb_min="1" />
 
                                 <TextView
@@ -690,6 +690,165 @@
                                     android:textStyle="bold" />
 
                             </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="?attr/xui_config_color_separator_light" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/append_location_enable"
+                                android:textStyle="bold"
+                                tools:ignore="RelativeOverlap" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/append_location_enable_tips"
+                                android:textSize="@dimen/text_size_mini"
+                                tools:ignore="SmallSp" />
+
+                        </LinearLayout>
+
+                        <com.xuexiang.xui.widget.button.switchbutton.SwitchButton
+                            android:id="@+id/sb_append_location"
+                            style="@style/SwitchButtonStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            tools:ignore="TouchTargetSizeCheck" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_append_location_apps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/tv_append_location_apps"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textSize="@dimen/text_size_small" />
+
+                        <com.xuexiang.xui.widget.button.ButtonView
+                            android:id="@+id/btn_append_location_apps"
+                            style="@style/ButtonView.Gray"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:gravity="center"
+                            android:minWidth="70dp"
+                            android:padding="5dp"
+                            android:text="@string/append_location_apps_select" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:text="@string/append_location_throttle_tips"
+                            android:textSize="@dimen/text_size_mini"
+                            tools:ignore="SmallSp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/append_location_distance_label"
+                                android:textSize="@dimen/text_size_small"
+                                android:textStyle="bold" />
+
+                            <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+                                android:id="@+id/et_append_location_distance"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:layout_weight="1"
+                                android:digits="0123456789"
+                                android:inputType="number"
+                                android:singleLine="true"
+                                android:textAlignment="center"
+                                app:met_allowEmpty="false"
+                                app:met_autoValidate="true"
+                                app:met_errorMessage="@string/tip_number_only_error_message"
+                                app:met_regexp="@string/regexp_number_only"
+                                app:met_validateOnFocusLost="true"
+                                tools:ignore="DuplicateSpeakableTextCheck,TextContrastCheck,TouchTargetSizeCheck" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/meter"
+                                android:textSize="@dimen/text_size_small"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/append_location_interval_label"
+                                android:textSize="@dimen/text_size_small"
+                                android:textStyle="bold" />
+
+                            <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+                                android:id="@+id/et_append_location_interval"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:layout_weight="1"
+                                android:digits="0123456789"
+                                android:inputType="number"
+                                android:singleLine="true"
+                                android:textAlignment="center"
+                                app:met_allowEmpty="false"
+                                app:met_autoValidate="true"
+                                app:met_errorMessage="@string/tip_number_only_error_message"
+                                app:met_regexp="@string/regexp_number_only"
+                                app:met_validateOnFocusLost="true"
+                                tools:ignore="DuplicateSpeakableTextCheck,TextContrastCheck,TouchTargetSizeCheck" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/minute"
+                                android:textSize="@dimen/text_size_small"
+                                android:textStyle="bold" />
 
                         </LinearLayout>
 

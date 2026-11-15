@@ -985,6 +985,25 @@
     <string name="min_interval">Min Interval</string>
     <string name="min_distance">Min Distance</string>
     <string name="meter">m</string>
+    <string name="append_location_enable">Append location to forwarded messages</string>
+    <string name="append_location_enable_tips">Only notifications from the apps selected below get the latest location appended. Reads the existing location cache, so it costs no extra battery.</string>
+    <string name="append_location_apps_title">Apps with location appended</string>
+    <string name="append_location_apps_select">Select apps</string>
+    <string name="append_location_apps_empty">No app selected</string>
+    <string name="append_location_apps_selected">Selected %1$d: %2$s</string>
+    <string name="append_location_distance_label">Move threshold</string>
+    <string name="append_location_interval_label">Report interval</string>
+    <string name="append_location_throttle_tips">Re-append only after moving beyond the threshold or after the interval since the last report; 0 in either field appends to every message</string>
+
+    <string name="append_location_coord_line">Coordinates: %1$s,%2$s</string>
+    <string name="append_location_address_line">Address: %1$s</string>
+    <string name="append_location_time_line">Captured at %1$s (%2$s)</string>
+    <string name="append_location_time_only">Captured at %1$s</string>
+    <string name="append_location_ago_now">just now</string>
+    <string name="append_location_ago_minute">%1$d min ago</string>
+    <string name="append_location_ago_hour">%1$d h ago</string>
+    <string name="append_location_ago_day">%1$d d ago</string>
+    <string name="append_location_unready">[Location] Unavailable: enable system location and the GPS location service first.</string>
     <string name="uid">UID</string>
 
     <string name="enable_bluetooth">Enable Bluetooth discovery</string>

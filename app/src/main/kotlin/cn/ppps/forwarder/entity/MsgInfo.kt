@@ -8,6 +8,7 @@ import cn.ppps.forwarder.R
 import cn.ppps.forwarder.utils.AppUtils
 import cn.ppps.forwarder.utils.BatteryUtils
 import cn.ppps.forwarder.utils.HttpServerUtils
+import cn.ppps.forwarder.utils.LocationUtils
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.PhoneUtils
 import cn.ppps.forwarder.utils.SettingUtils
@@ -38,7 +39,11 @@ data class MsgInfo(
 
     val titleForSend = getTitleForSend()
 
-    val smsVoForSend = getContentForSend()
+    //同一条消息在多通道、重试里会重复渲染，用「来源+接收时间」做节流判定的消息键
+    val locationMsgKey = "$from|${date.time}"
+
+    //序列化/日志用的原文不带位置，也避免未命中规则的消息在构造时就消耗节流状态
+    val smsVoForSend = getContentForSend(withLocation = false)
 
     fun getTitleForSend(titleTemplate: String = "", regexReplace: String = "", ruleTitle: String = ""): String {
         var template = titleTemplate.replace("null", "")
@@ -46,7 +51,7 @@ data class MsgInfo(
         return replaceTemplate(template, regexReplace, "", ruleTitle)
     }
 
-    fun getContentForSend(ruleSmsTemplate: String = "", regexReplace: String = "", ruleTitle: String = ""): String {
+    fun getContentForSend(ruleSmsTemplate: String = "", regexReplace: String = "", ruleTitle: String = "", withLocation: Boolean = true): String {
         var customSmsTemplate: String = getString(R.string.tag_from).toString() + "\n" +
                 getString(R.string.tag_sms) + "\n" +
                 getString(R.string.tag_card_slot) + "\n" +
@@ -69,7 +74,14 @@ data class MsgInfo(
             }
         }
 
-        return replaceTemplate(customSmsTemplate, regexReplace, "", ruleTitle)
+        //末尾会自动附带位置，模板里的 {{LOCATION}} 就是重复的一段，渲染前先抹掉
+        if (withLocation && LocationUtils.willAppendLocation(from)) {
+            customSmsTemplate = customSmsTemplate.replace(getString(R.string.tag_location), "", ignoreCase = true)
+        }
+
+        //链接、剪贴板这类模板字段只想要模板本身，位置尾巴由调用方用 withLocation=false 关掉
+        val rendered = replaceTemplate(customSmsTemplate, regexReplace, "", ruleTitle)
+        return if (withLocation) LocationUtils.appendLocation(rendered, from, locationMsgKey) else rendered
     }
 
     fun getContentFromJson(jsonTemplate: String, ruleTitle: String = ""): String {
@@ -250,6 +262,15 @@ data class MsgInfo(
     //替换{{LOCATION}}标签
     private fun String.replaceLocationTag(encoderName: String = ""): String {
         if (TextUtils.isEmpty(this)) return this
+
+        //模板里真的用到位置标签时才按需刷新定位，避免无关渲染触发 GPS
+        if (contains(getString(R.string.tag_location)) ||
+            contains(getString(R.string.tag_location_longitude)) ||
+            contains(getString(R.string.tag_location_latitude)) ||
+            contains(getString(R.string.tag_location_address))
+        ) {
+            LocationUtils.ensureFreshLocation()
+        }
 
         val location = HttpServerUtils.apiLocationCache
         var locationStr = location.toString()

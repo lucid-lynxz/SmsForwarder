@@ -46,6 +46,8 @@ import cn.ppps.forwarder.utils.ACTION_RESTART
 import cn.ppps.forwarder.utils.ACTION_START
 import cn.ppps.forwarder.utils.ACTION_STOP
 import cn.ppps.forwarder.utils.ACTION_UPDATE_NOTIFICATION
+import cn.ppps.forwarder.utils.AppLabel
+import cn.ppps.forwarder.utils.AppUtils
 import cn.ppps.forwarder.utils.AppUtils.getAppPackageName
 import cn.ppps.forwarder.utils.BluetoothUtils
 import cn.ppps.forwarder.utils.CommonUtils
@@ -80,9 +82,15 @@ import com.xuexiang.xui.widget.dialog.materialdialog.MaterialDialog
 import com.xuexiang.xui.widget.picker.XSeekBar
 import com.xuexiang.xui.widget.picker.widget.builder.OptionsPickerBuilder
 import com.xuexiang.xui.widget.picker.widget.listener.OnOptionsSelectListener
+import com.xuexiang.xui.widget.spinner.editspinner.EditSpinner
 import com.xuexiang.xutil.XUtil
 import com.xuexiang.xutil.XUtil.getPackageManager
 import com.xuexiang.xutil.file.FileUtils
+import io.reactivex.Single
+import io.reactivex.SingleObserver
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import java.util.Locale
 
 @Suppress("SpellCheckingInspection", "PrivatePropertyName")
@@ -96,7 +104,6 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
 
     //已安装App信息列表
     private val appListSpinnerList = ArrayList<AppListAdapterItem>()
-    private lateinit var appListSpinnerAdapter: AppListSpinnerAdapter<*>
     private val appListObserver = Observer { it: String ->
         Log.d(TAG, "EVENT_LOAD_APP_LIST: $it")
         initAppSpinner()
@@ -150,6 +157,10 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
         switchEnableBluetooth(binding!!.sbEnableBluetooth, binding!!.layoutBluetoothSetting, binding!!.xsbScanInterval, binding!!.scbIgnoreAnonymous)
         //GPS定位功能
         switchEnableLocation(binding!!.sbEnableLocation, binding!!.layoutLocationSetting, binding!!.rgAccuracy, binding!!.rgPowerRequirement, binding!!.xsbMinInterval, binding!!.xsbMinDistance)
+        //转发消息自动附带位置
+        switchAppendLocation(binding!!.sbAppendLocation, binding!!.layoutAppendLocationApps)
+        refreshAppendLocationAppsText(binding!!.tvAppendLocationApps)
+        editAppendLocationThrottle(binding!!.etAppendLocationDistance, binding!!.etAppendLocationInterval)
         //短信指令
         switchEnableSmsCommand(binding!!.sbEnableSmsCommand, binding!!.etSafePhone)
         //靠近听筒关屏
@@ -229,6 +240,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
         binding!!.btnExtraSim1.setOnClickListener(this)
         binding!!.btnExtraSim2.setOnClickListener(this)
         binding!!.btnExportLog.setOnClickListener(this)
+        binding!!.btnAppendLocationApps.setOnClickListener(this)
 
         //监听已安装App信息列表加载完成事件
         LiveEventBus.get(EVENT_LOAD_APP_LIST, String::class.java).observeStickyForever(appListObserver)
@@ -302,6 +314,11 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
                 val simInfo: SimInfo? = App.SimInfoList[1]
                 binding!!.etSubidSim2.setText(simInfo?.mSubscriptionId.toString())
                 binding!!.etExtraSim2.setText(simInfo?.mCarrierName.toString() + "_" + simInfo?.mNumber.toString())
+                return
+            }
+
+            R.id.btn_append_location_apps -> {
+                openAppendLocationAppsPicker()
                 return
             }
 
@@ -700,6 +717,101 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
                 restartLocationService()
             }
         }
+    }
+
+    //转发消息末尾自动附带位置（按勾选的来源应用生效，本行只在「GPS定位服务」开启时可见）
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private fun switchAppendLocation(sbAppendLocation: SwitchButton, layoutAppendLocationApps: LinearLayout) {
+        //先回填状态再挂监听，否则页面打开时程序化赋值会触发一次回调
+        val isEnable = SettingUtils.enableAppendLocation
+        sbAppendLocation.isChecked = isEnable
+        layoutAppendLocationApps.visibility = if (isEnable) View.VISIBLE else View.GONE
+
+        sbAppendLocation.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
+            SettingUtils.enableAppendLocation = isChecked
+            layoutAppendLocationApps.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+    }
+
+    //透出节流阈值：边改边存；清空或非法输入不动已存值，避免误把节流关掉
+    private fun editAppendLocationThrottle(etDistance: EditText, etInterval: EditText) {
+        etDistance.setText("${SettingUtils.appendLocationDistanceM}")
+        etDistance.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable) {
+                SettingUtils.appendLocationDistanceM = s.toString().trim().toIntOrNull() ?: return
+            }
+        })
+        etInterval.setText("${SettingUtils.appendLocationIntervalMin}")
+        etInterval.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable) {
+                SettingUtils.appendLocationIntervalMin = s.toString().trim().toIntOrNull() ?: return
+            }
+        })
+    }
+
+    //已选应用名回显；勾选入口在 initListeners 里挂到 onClick，与其他按钮共用 @SingleClick 防抖
+    private fun refreshAppendLocationAppsText(tvAppendLocationApps: TextView) {
+        val packages = splitAppPackages(SettingUtils.appendLocationApps)
+        tvAppendLocationApps.text = if (packages.isEmpty()) {
+            getString(R.string.append_location_apps_empty)
+        } else {
+            String.format(getString(R.string.append_location_apps_selected), packages.size, packages.joinToString("、") { AppUtils.getAppName(it) })
+        }
+    }
+
+    //应用列表要问系统，放到 IO 线程查，查完回主线程弹窗
+    private fun openAppendLocationAppsPicker() {
+        Single.fromCallable { AppUtils.getLaunchableAppsInfo() }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(object : SingleObserver<List<AppLabel>> {
+            override fun onSubscribe(d: Disposable) {}
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                Log.e(TAG, "getLaunchableAppsInfo error: ${e.message}")
+            }
+
+            override fun onSuccess(appLabels: List<AppLabel>) {
+                if (!isAdded) return
+                if (appLabels.isEmpty()) {
+                    XToastUtils.error(R.string.tips_get_installed_apps)
+                    return
+                }
+                showAppendLocationAppsDialog(appLabels)
+            }
+        })
+    }
+
+    private fun showAppendLocationAppsDialog(appLabels: List<AppLabel>) {
+        val selected = splitAppPackages(SettingUtils.appendLocationApps)
+        //已保存但列表里没有的包名（应用卸载了、或它本来就没有启动入口）也列出来，否则用户没法取消勾选
+        val items = appLabels.toMutableList()
+        for (packageName in selected) {
+            if (items.none { it.packageName == packageName }) items.add(AppLabel(AppUtils.getAppName(packageName), packageName))
+        }
+        val checked = ArrayList<Int>()
+        for (i in items.indices) {
+            if (selected.contains(items[i].packageName)) checked.add(i)
+        }
+        MaterialDialog.Builder(requireContext())
+            .title(R.string.append_location_apps_title)
+            .items(items.map { it.name })
+            .itemsCallbackMultiChoice(checked.toTypedArray()) { _, _, _ -> true }
+            .positiveText(R.string.save)
+            .negativeText(R.string.cancel)
+            .onPositive { dialog: MaterialDialog?, _: DialogAction? ->
+                val chosen = dialog?.selectedIndices?.map { items[it].packageName } ?: emptyList()
+                SettingUtils.appendLocationApps = chosen.joinToString("\n")
+                refreshAppendLocationAppsText(binding!!.tvAppendLocationApps)
+            }
+            .show()
+    }
+
+    //附带位置应用的存储格式：一行一个包名，空行与首尾空格忽略
+    private fun splitAppPackages(appList: String): List<String> {
+        return appList.split("\n").map { it.trim() }.filter { it.isNotEmpty() }
     }
 
     //重启定位服务
@@ -1438,18 +1550,23 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
         //列表为空也不显示下拉框
         if (appListSpinnerList.isEmpty()) return
 
-        appListSpinnerAdapter = AppListSpinnerAdapter(appListSpinnerList).setIsFilterKey(true).setFilterColor("#EF5362").setBackgroundSelector(R.drawable.selector_custom_spinner_bg)
-        binding!!.spApp.setAdapter(appListSpinnerAdapter)
-        binding!!.spApp.setOnItemClickListener { _: AdapterView<*>, _: View, position: Int, _: Long ->
+        bindAppSpinner(binding!!.spApp, binding!!.layoutSpApp, binding!!.etAppList)
+
+    }
+
+    //把已加载的APP下拉列表绑定到指定的名单输入框
+    private fun bindAppSpinner(spApp: EditSpinner, layoutSpApp: LinearLayout, etAppList: EditText) {
+        val adapter = AppListSpinnerAdapter(appListSpinnerList).setIsFilterKey(true).setFilterColor("#EF5362").setBackgroundSelector(R.drawable.selector_custom_spinner_bg)
+        spApp.setAdapter(adapter)
+        spApp.setOnItemClickListener { _: AdapterView<*>, _: View, position: Int, _: Long ->
             try {
-                val appInfo = appListSpinnerAdapter.getItemSource(position) as AppListAdapterItem
-                CommonUtils.insertOrReplaceText2Cursor(binding!!.etAppList, appInfo.packageName.toString() + "\n")
+                val appInfo = adapter.getItemSource(position) as AppListAdapterItem
+                CommonUtils.insertOrReplaceText2Cursor(etAppList, appInfo.packageName.toString() + "\n")
             } catch (e: Exception) {
                 XToastUtils.error(e.message.toString())
             }
         }
-        binding!!.layoutSpApp.visibility = View.VISIBLE
-
+        layoutSpApp.visibility = View.VISIBLE
     }
 
 }

@@ -102,6 +102,18 @@ const val SP_LOCATION_POWER_REQUIREMENT = "location_power_requirement"
 const val SP_LOCATION_MIN_INTERVAL = "location_min_interval_time"
 const val SP_LOCATION_MIN_DISTANCE = "location_min_distance"
 
+//转发时自动附带位置：总开关 + 生效的应用名单（换行分隔包名）
+const val SP_ENABLE_APPEND_LOCATION = "enable_append_location"
+const val SP_APPEND_LOCATION_APPS = "append_location_apps"
+
+//附带位置的透出节流：双阈值 + 上次透出的时间/坐标/消息键
+const val SP_APPEND_LOCATION_DISTANCE_M = "append_location_distance_m"
+const val SP_APPEND_LOCATION_INTERVAL_MIN = "append_location_interval_min"
+const val SP_APPEND_LOCATION_LAST_TIME = "append_location_last_time"
+const val SP_APPEND_LOCATION_LAST_LAT = "append_location_last_lat"
+const val SP_APPEND_LOCATION_LAST_LNG = "append_location_last_lng"
+const val SP_APPEND_LOCATION_LAST_MSG = "append_location_last_msg"
+
 const val SP_BLUETOOTH = "enable_bluetooth"
 const val SP_BLUETOOTH_SCAN_INTERVAL = "bluetooth_scan_interval"
 const val SP_BLUETOOTH_IGNORE_ANONYMOUS = "bluetooth_ignore_anonymous"

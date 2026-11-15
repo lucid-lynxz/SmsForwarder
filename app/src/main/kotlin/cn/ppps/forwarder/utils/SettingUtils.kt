@@ -155,6 +155,24 @@ class SettingUtils private constructor() {
         //设置位置更新最小距离（单位：米）；默认距离：0米
         var locationMinDistance: Int by SharedPreference(SP_LOCATION_MIN_DISTANCE, 0)
 
+        //是否在转发消息末尾自动附带位置（仅对勾选的来源应用生效）
+        var enableAppendLocation: Boolean by SharedPreference(SP_ENABLE_APPEND_LOCATION, false)
+
+        //勾选了附带位置的来源应用（一行一个包名，由通用设置的多选列表写入）
+        var appendLocationApps: String by SharedPreference(SP_APPEND_LOCATION_APPS, "")
+
+        //透出节流：移动超过该距离（米）才重新透出；0=不节流，每条都带
+        var appendLocationDistanceM: Int by SharedPreference(SP_APPEND_LOCATION_DISTANCE_M, 200)
+
+        //透出节流：距上次透出超过该时长（分钟）兜底透出；0=不节流，每条都带
+        var appendLocationIntervalMin: Int by SharedPreference(SP_APPEND_LOCATION_INTERVAL_MIN, 30)
+
+        //上次透出的节流状态（落盘，进程重启不丢）；坐标为 0 表示上次透出的是「定位未就绪」
+        var appendLocationLastTime: Long by SharedPreference(SP_APPEND_LOCATION_LAST_TIME, 0L)
+        var appendLocationLastLat: Float by SharedPreference(SP_APPEND_LOCATION_LAST_LAT, 0f)
+        var appendLocationLastLng: Float by SharedPreference(SP_APPEND_LOCATION_LAST_LNG, 0f)
+        var appendLocationLastMsg: String by SharedPreference(SP_APPEND_LOCATION_LAST_MSG, "")
+
         //是否跟随系统语言
         //var isFlowSystemLanguage: Boolean by SharedPreference(SP_IS_FLOW_SYSTEM_LANGUAGE, false)
 

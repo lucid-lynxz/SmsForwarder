@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.location.Location
 import android.location.LocationManager
+import android.os.Handler
+import android.os.HandlerThread
 import android.os.IBinder
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -32,6 +34,8 @@ import com.king.location.OnExceptionListener
 import com.king.location.OnLocationListener
 import com.xuexiang.xaop.util.PermissionUtils
 import java.util.Date
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @SuppressLint("SimpleDateFormat")
 @Suppress("PrivatePropertyName", "DEPRECATION")
@@ -48,6 +52,74 @@ class LocationService : Service() {
 
     companion object {
         var isRunning = false
+
+        private val onceLock = Any()
+        private var pendingLatch: CountDownLatch? = null
+        private var locationHandler: Handler? = null
+
+        //king-location 的 startLocation 内部要建 Handler，调用线程必须有 Looper；
+        //转发/测试跑在无 Looper 的 worker 线程上，故把定位动作派发到专用 HandlerThread。
+        private fun locationHandler(): Handler {
+            synchronized(onceLock) {
+                locationHandler?.let { return it }
+                val thread = HandlerThread("location-once")
+                thread.start()
+                return Handler(thread.looper).also { locationHandler = it }
+            }
+        }
+
+        //按需单次定位：发起一次定位并等待结果（超时返回 false，调用方回退缓存）。
+        //只在转发真正需要位置时调用，避免常驻定位监听让系统隐私指示常亮。
+        fun requestLocationOnce(timeoutMs: Long): Boolean {
+            if (!SettingUtils.enableLocation) return false
+            if (!PermissionUtils.isGranted(android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION)) return false
+            if (!LocationUtils.isLocationEnabled(App.context) || !LocationUtils.hasLocationCapability(App.context)) return false
+
+            val latch = CountDownLatch(1)
+            synchronized(onceLock) {
+                val existing = pendingLatch
+                if (existing != null) {
+                    //已有一次定位在跑，直接等它的结果，避免重复发起
+                    return existing.await(timeoutMs, TimeUnit.MILLISECONDS)
+                }
+                pendingLatch = latch
+            }
+
+            return try {
+                locationHandler().post {
+                    try {
+                        val locationOption = App.LocationClient.getLocationOption()
+                            .setAccuracy(SettingUtils.locationAccuracy)
+                            .setPowerRequirement(SettingUtils.locationPowerRequirement)
+                            .setOnceLocation(true)
+                            .setLastKnownLocation(false)
+                        App.LocationClient.setLocationOption(locationOption)
+                        if (App.LocationClient.isStarted()) App.LocationClient.stopLocation()
+                        App.LocationClient.startLocation()
+                    } catch (e: Exception) {
+                        Log.e("LocationService", "requestLocationOnce start: ${e.message}")
+                        signalOnce()
+                    }
+                }
+                latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+            } catch (e: Exception) {
+                Log.e("LocationService", "requestLocationOnce: ${e.message}")
+                false
+            } finally {
+                synchronized(onceLock) { if (pendingLatch === latch) pendingLatch = null }
+                locationHandler?.post {
+                    try {
+                        if (App.LocationClient.isStarted()) App.LocationClient.stopLocation()
+                    } catch (e: Exception) {
+                        Log.e("LocationService", "requestLocationOnce stop: ${e.message}")
+                    }
+                }
+            }
+        }
+
+        private fun signalOnce() {
+            synchronized(onceLock) { pendingLatch?.countDown() }
+        }
     }
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -73,7 +145,7 @@ class LocationService : Service() {
         when {
             intent.action == ACTION_START && !isRunning -> startService()
             intent.action == ACTION_STOP && isRunning -> stopService()
-            intent.action == ACTION_RESTART -> restartLocation()
+            intent.action == ACTION_RESTART -> prepareLocation()
         }
         return START_STICKY
     }
@@ -90,10 +162,6 @@ class LocationService : Service() {
 
     private fun startService() {
         try {
-            //清空缓存
-            HttpServerUtils.apiLocationCache = LocationInfo()
-            TaskUtils.locationInfoOld = LocationInfo()
-
             if (SettingUtils.enableLocation && PermissionUtils.isGranted(android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
 
                 //设置定位监听
@@ -129,19 +197,22 @@ class LocationService : Service() {
 
                             TaskUtils.locationInfoOld = locationInfoNew
                         }
+
+                        //唤醒正在等待本次单次定位的调用方
+                        signalOnce()
                     }
                 })
 
                 //设置异常监听
                 App.LocationClient.setOnExceptionListener(object : OnExceptionListener {
                     override fun onException(@LocationErrorCode errorCode: Int, e: Exception) {
-                        //定位出现异常 && 尝试重启定位
+                        //定位出现异常：唤醒等待方让其回退缓存，不再自动重启持续定位
                         Log.w(TAG, "onException(errorCode = ${errorCode}, e = ${e})")
-                        restartLocation()
+                        signalOnce()
                     }
                 })
 
-                restartLocation()
+                prepareLocation()
                 isRunning = true
             } else if (!SettingUtils.enableLocation && App.LocationClient.isStarted()) {
                 Log.d(TAG, "stopLocation")
@@ -175,24 +246,10 @@ class LocationService : Service() {
         }
     }
 
-    private fun restartLocation() {
-        //如果已经开始定位，则先停止定位
+    //按需模式下服务只持有监听与生命周期，不主动发起定位；这里仅确保没有残留的持续定位
+    private fun prepareLocation() {
         if (App.LocationClient.isStarted()) {
             App.LocationClient.stopLocation()
-        }
-        if (LocationUtils.isLocationEnabled(App.context) && LocationUtils.hasLocationCapability(App.context)) {
-            //可根据具体需求设置定位配置参数（这里只列出一些主要的参数）
-            val locationOption = App.LocationClient.getLocationOption().setAccuracy(SettingUtils.locationAccuracy)//设置位置精度：高精度
-                .setPowerRequirement(SettingUtils.locationPowerRequirement) //设置电量消耗：低电耗
-                .setMinTime(SettingUtils.locationMinInterval)//设置位置更新最小时间间隔（单位：毫秒）； 默认间隔：10000毫秒，最小间隔：1000毫秒
-                .setMinDistance(SettingUtils.locationMinDistance)//设置位置更新最小距离（单位：米）；默认距离：0米
-                .setOnceLocation(false)//设置是否只定位一次，默认为 false，当设置为 true 时，则只定位一次后，会自动停止定位
-                .setLastKnownLocation(false)//设置是否获取最后一次缓存的已知位置，默认为 true
-            //设置定位配置参数
-            App.LocationClient.setLocationOption(locationOption)
-            App.LocationClient.startLocation()
-        } else {
-            Log.w(TAG, "onException: GPS未开启")
         }
     }
 
@@ -209,19 +266,13 @@ class LocationService : Service() {
     }
 
     private fun handleLocationStatusChanged() {
-        //处理状态变化
-        if (LocationUtils.isLocationEnabled(App.context) && LocationUtils.hasLocationCapability(App.context)) {
-            //已启用
-            Log.d(TAG, "handleLocationStatusChanged: 已启用")
-            if (SettingUtils.enableLocation && !App.LocationClient.isStarted()) {
-                App.LocationClient.startLocation()
-            }
-        } else {
-            //已停用
+        //系统定位开关被关掉时停掉可能正在进行的单次定位；开启时不主动定位（按需触发）
+        if (!LocationUtils.isLocationEnabled(App.context) || !LocationUtils.hasLocationCapability(App.context)) {
             Log.d(TAG, "handleLocationStatusChanged: 已停用")
-            if (SettingUtils.enableLocation && App.LocationClient.isStarted()) {
+            if (App.LocationClient.isStarted()) {
                 App.LocationClient.stopLocation()
             }
+            signalOnce()
         }
     }
 
