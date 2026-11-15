@@ -102,15 +102,13 @@ object SendUtils {
                 return
             }
 
-            //免打扰(禁用转发)：日期段 与 时间段 为「与」关系，且至少配置一项才生效
-            //未配置星期视为「不限星期」，未配置时段视为「不限时段」，二者都命中才拦截
+            //免打扰(禁用转发)：星期 与 时段 都配置才生效，且二者都命中才拦截；任一未配置即不生效
             Log.d(TAG, "silentDayOfWeek = ${rule.silentDayOfWeek}, silentPeriodStart = ${rule.silentPeriodStart}, silentPeriodEnd = ${rule.silentPeriodEnd}")
             val silentDayOfWeek = rule.silentDayOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
-            val dayConfigured = silentDayOfWeek.isNotEmpty()
             val periodConfigured = rule.silentPeriodStart != rule.silentPeriodEnd
-            if (dayConfigured || periodConfigured) {
-                val dayMatched = !dayConfigured || silentDayOfWeek.contains(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
-                val periodMatched = !periodConfigured || DataProvider.isCurrentTimeInPeriod(rule.silentPeriodStart, rule.silentPeriodEnd)
+            if (silentDayOfWeek.isNotEmpty() && periodConfigured) {
+                val dayMatched = silentDayOfWeek.contains(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))
+                val periodMatched = DataProvider.isCurrentTimeInPeriod(rule.silentPeriodStart, rule.silentPeriodEnd)
                 if (dayMatched && periodMatched) {
                     Log.d(TAG, "免打扰(禁用转发)时间段")
                     updateLogs(logId, 0, getString(R.string.silent_time_period))

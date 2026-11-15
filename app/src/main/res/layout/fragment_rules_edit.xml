@@ -689,6 +689,14 @@
                     </LinearLayout>
                 </HorizontalScrollView>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:text="@string/silent_week_tips"
+                    android:textSize="@dimen/text_size_mini"
+                    tools:ignore="SmallSp" />
+
             </LinearLayout>
 
         </LinearLayout>
