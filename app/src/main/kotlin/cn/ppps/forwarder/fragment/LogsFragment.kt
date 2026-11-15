@@ -178,6 +178,15 @@ class LogsFragment : BaseFragment<FragmentLogsBinding?>(), MsgPagingAdapter.OnIt
         @SuppressLint("SimpleDateFormat") val utcFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         detailStr.append(getString(R.string.time)).append(DateUtils.date2String(item.msg.time, utcFormatter))
 
+        if (item.logsList.isNotEmpty()) {
+            detailStr.append("\n")
+            for (log in item.logsList) {
+                detailStr.append("\n").append(log.senderName).append(" ")
+                    .append(getString(R.string.result)).append(FORWARD_STATUS_MAP[log.forwardStatus])
+                    .append("\n").append(log.forwardResponse)
+            }
+        }
+
         MaterialDialog.Builder(requireContext())
             .iconRes(item.msg.simImageId)
             .title(R.string.details)
