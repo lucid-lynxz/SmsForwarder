@@ -241,6 +241,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
         binding!!.btnExtraSim2.setOnClickListener(this)
         binding!!.btnExportLog.setOnClickListener(this)
         binding!!.btnAppendLocationApps.setOnClickListener(this)
+        binding!!.btnSmsReadTest.setOnClickListener(this)
 
         //监听已安装App信息列表加载完成事件
         LiveEventBus.get(EVENT_LOAD_APP_LIST, String::class.java).observeStickyForever(appListObserver)
@@ -319,6 +320,11 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
 
             R.id.btn_append_location_apps -> {
                 openAppendLocationAppsPicker()
+                return
+            }
+
+            R.id.btn_sms_read_test -> {
+                openNewPage(SmsTestFragment::class.java)
                 return
             }
 

@@ -915,6 +915,22 @@
     <string name="pure_task_mode_tips">启动APP时直接进入自动任务</string>
     <string name="debug_mode">开启调试模式</string>
     <string name="debug_mode_tips">将Log.*写入文件，以便排查问题；可导出到下载目录</string>
+
+    <!--短信读取测试-->
+    <string name="grant_permission">授予权限</string>
+    <string name="sms_read_test">短信读取测试</string>
+    <string name="sms_read_test_short">读取测试</string>
+    <string name="sms_only_code">只看疑似验证码短信</string>
+    <string name="sms_code_tag">验证码</string>
+    <string name="sms_test_permission">读取短信权限：%1$s</string>
+    <string name="sms_test_permission_granted">已授予</string>
+    <string name="sms_test_permission_denied">未授予</string>
+    <string name="sms_test_default_app">默认短信应用：%1$s</string>
+    <string name="sms_test_default_app_self">本应用</string>
+    <string name="sms_test_default_app_unknown">未设置</string>
+    <string name="sms_test_result">读取结果：收到 %1$d 条，其中疑似验证码 %2$d 条</string>
+    <string name="sms_test_result_empty">读取结果：0 条。若列表里本该有短信，说明本应用读不到短信数据库</string>
+    <string name="sms_test_permission_missing">读取结果：未授予读取短信权限，无法读取</string>
     <string name="optional_components">可选组件：</string>
     <string name="enable_cactus">启用 Cactus 增强保活措施（会增加耗电）</string>
     <string name="enable_cactus_tips">双进程前台服务/JobScheduler/WorkManager/1像素/无声音乐</string>

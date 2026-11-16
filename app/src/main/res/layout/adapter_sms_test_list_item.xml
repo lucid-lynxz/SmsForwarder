@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.xuexiang.xui.widget.layout.XUIFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_view"
+    style="@style/XUILayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/config_margin_5dp"
+    android:layout_marginTop="@dimen/config_margin_5dp"
+    android:layout_marginEnd="@dimen/config_margin_5dp"
+    android:paddingStart="@dimen/config_padding_8dp"
+    android:paddingTop="@dimen/config_padding_5dp"
+    android:paddingEnd="@dimen/config_padding_8dp"
+    android:paddingBottom="@dimen/config_padding_5dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="top"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_from"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="@dimen/text_size_medium"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_tag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:background="@color/xui_btn_blue_normal_color"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp"
+                    android:text="@string/sms_code_tag"
+                    android:textColor="@color/white"
+                    android:textSize="@dimen/text_size_mini"
+                    android:visibility="gone"
+                    tools:ignore="SmallSp" />
+
+                <TextView
+                    android:id="@+id/tv_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp" />
+
+                <ImageView
+                    android:id="@+id/iv_sim_image"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="5dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_sim"
+                    tools:ignore="ContentDescription,ImageContrastCheck" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textSize="@dimen/text_size_small" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.xuexiang.xui.widget.layout.XUIFrameLayout>

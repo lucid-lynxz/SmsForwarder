@@ -884,6 +884,22 @@
     <string name="pure_task_mode_tips">When starting, it will directly enter the task center</string>
     <string name="debug_mode">Enable debug mode</string>
     <string name="debug_mode_tips">Save Log.* to file for troubleshooting; export to download directory.</string>
+
+    <!--SMS read test-->
+    <string name="grant_permission">Grant permission</string>
+    <string name="sms_read_test">SMS read test</string>
+    <string name="sms_read_test_short">Read test</string>
+    <string name="sms_only_code">Only suspected verification-code SMS</string>
+    <string name="sms_code_tag">Code</string>
+    <string name="sms_test_permission">Read SMS permission: %1$s</string>
+    <string name="sms_test_permission_granted">granted</string>
+    <string name="sms_test_permission_denied">not granted</string>
+    <string name="sms_test_default_app">Default SMS app: %1$s</string>
+    <string name="sms_test_default_app_self">this app</string>
+    <string name="sms_test_default_app_unknown">not set</string>
+    <string name="sms_test_result">Read result: %1$d message(s), %2$d of them look like verification codes</string>
+    <string name="sms_test_result_empty">Read result: 0 message(s). If there should be messages, this app cannot read the SMS database.</string>
+    <string name="sms_test_permission_missing">Read result: no permission to read SMS.</string>
     <string name="optional_components">Opt.:</string>
     <string name="enable_cactus">Enable Cactus Keep Alive</string>
     <string name="enable_cactus_tips">Dual foreground service/JobScheduler/WorkManager/1px/silent music</string>
