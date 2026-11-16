@@ -213,7 +213,7 @@ object LocationUtils {
     }
 
     //WGS-84 → GCJ-02，境外坐标不做偏移（偏移算法仅对国内范围定义）
-    private fun wgs84ToGcj02(wgLat: Double, wgLng: Double): DoubleArray {
+    fun wgs84ToGcj02(wgLat: Double, wgLng: Double): DoubleArray {
         if (outOfChina(wgLat, wgLng)) return doubleArrayOf(wgLat, wgLng)
 
         var dLat = transformLat(wgLng - 105.0, wgLat - 35.0)
