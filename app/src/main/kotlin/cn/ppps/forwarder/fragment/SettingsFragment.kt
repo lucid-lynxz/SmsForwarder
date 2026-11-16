@@ -148,6 +148,8 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
 
         //转发短信广播
         switchEnableSms(binding!!.sbEnableSms)
+        //短信轮询兜底转发
+        switchEnableSmsPolling(binding!!.sbEnableSmsPolling)
         //转发通话记录
         switchEnablePhone(binding!!.sbEnablePhone, binding!!.scbCallType1, binding!!.scbCallType2, binding!!.scbCallType3, binding!!.scbCallType4, binding!!.scbCallType5, binding!!.scbCallType6)
         //转发应用通知
@@ -408,6 +410,15 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
             }
         }
         sbEnableSms.isChecked = SettingUtils.enableSms
+    }
+
+    //短信轮询兜底转发
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    private fun switchEnableSmsPolling(sbEnableSmsPolling: SwitchButton) {
+        sbEnableSmsPolling.setOnCheckedChangeListener { _: CompoundButton?, isChecked: Boolean ->
+            SettingUtils.enableSmsPolling = isChecked
+        }
+        sbEnableSmsPolling.isChecked = SettingUtils.enableSmsPolling
     }
 
     //转发通话

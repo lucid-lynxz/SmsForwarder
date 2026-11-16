@@ -19,6 +19,15 @@ class SettingUtils private constructor() {
         //是否转发短信
         var enableSms: Boolean by SharedPreference(SP_ENABLE_SMS, false)
 
+        //短信轮询兜底转发（补发广播漏掉的验证码/通知类短信）
+        var enableSmsPolling: Boolean by SharedPreference(SP_ENABLE_SMS_POLLING, true)
+
+        //短信轮询水位：上次心跳时刻，只转发比它更新的短信
+        var smsPollLastDate: Long by SharedPreference(SP_SMS_POLL_LAST_DATE, 0L)
+
+        //短信轮询与广播共用的「最近已处理」去重记录（JSON）
+        var smsPollSeen: String by SharedPreference(SP_SMS_POLL_SEEN, "")
+
         //是否转发通话
         var enablePhone: Boolean by SharedPreference(SP_ENABLE_PHONE, false)
 

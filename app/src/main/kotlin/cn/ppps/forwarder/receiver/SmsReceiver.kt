@@ -14,6 +14,7 @@ import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.PhoneUtils
 import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.SmsCommandUtils
+import cn.ppps.forwarder.utils.SmsPollUtils
 import cn.ppps.forwarder.utils.Worker
 import cn.ppps.forwarder.workers.SendWorker
 import com.xuexiang.xrouter.utils.TextUtils
@@ -71,6 +72,12 @@ class SmsReceiver : BroadcastReceiver() {
             //总开关
             if (!SettingUtils.enableSms) return
 
+            //轮询兜底可能已经转发过这条短信，避免重复
+            if (SmsPollUtils.isRecentlySeen(from, msg)) {
+                Log.d(TAG, "already forwarded by polling, skip: from = $from")
+                return
+            }
+
             //TODO：准确获取卡槽信息，目前测试结果只有 subscription 相对靠谱
             val slot = intent.extras?.getInt("slot") ?: -1
             val simId = intent.extras?.getInt("simId") ?: slot
@@ -115,6 +122,7 @@ class SmsReceiver : BroadcastReceiver() {
                 )
             ).build()
             WorkManager.getInstance(context).enqueue(request)
+            SmsPollUtils.markSeen(from, msg)
 
         } catch (e: Exception) {
             Log.e(TAG, "Parsing SMS failed: " + e.message.toString())

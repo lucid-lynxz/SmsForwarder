@@ -889,6 +889,8 @@
     <string name="grant_permission">Grant permission</string>
     <string name="sms_read_test">SMS read test</string>
     <string name="sms_read_test_short">Read test</string>
+    <string name="sms_polling">SMS database fallback</string>
+    <string name="sms_polling_tips">Watch the SMS database and instantly forward code/notification SMS the system did not broadcast to this app, with periodic polling as fallback; deduplicated with broadcast forwarding</string>
     <string name="sms_only_code">Only suspected verification-code SMS</string>
     <string name="sms_code_tag">Code</string>
     <string name="sms_test_permission">Read SMS permission: %1$s</string>

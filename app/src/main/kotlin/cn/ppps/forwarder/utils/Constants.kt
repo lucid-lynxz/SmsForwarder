@@ -45,6 +45,9 @@ const val PACKAGE_NAME = "cn.ppps.forwarder"
 
 //通用设置
 const val SP_ENABLE_SMS = "enable_sms"
+const val SP_ENABLE_SMS_POLLING = "enable_sms_polling"
+const val SP_SMS_POLL_LAST_DATE = "sms_poll_last_date"
+const val SP_SMS_POLL_SEEN = "sms_poll_seen"
 
 const val SP_ENABLE_PHONE = "enable_phone"
 const val SP_ENABLE_CALL_TYPE_1 = "enable_call_type_1"

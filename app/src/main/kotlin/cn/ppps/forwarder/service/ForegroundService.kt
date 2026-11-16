@@ -7,13 +7,17 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.database.ContentObserver
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.text.TextUtils
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Observer
@@ -40,6 +44,7 @@ import cn.ppps.forwarder.utils.FlashUtils
 import cn.ppps.forwarder.utils.INTENT_FRPC_APPLY_FILE
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.SettingUtils
+import cn.ppps.forwarder.utils.SmsPollUtils
 import cn.ppps.forwarder.utils.TASK_CONDITION_CRON
 import cn.ppps.forwarder.utils.VibrationUtils
 import cn.ppps.forwarder.utils.task.CronJobScheduler
@@ -55,7 +60,11 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.io.File
 
 @SuppressLint("SimpleDateFormat")
@@ -105,6 +114,10 @@ class ForegroundService : Service() {
     // 音乐播放器
     private var alarmPlayer: MediaPlayer? = null
     private var alarmPlayTimes = 0
+
+    // 短信轮询兜底转发任务
+    private var smsPollJob: Job? = null
+    private var smsObserver: ContentObserver? = null
     private val alarmObserver = Observer<AlarmSetting> { alarm ->
         Log.d(TAG, "Received alarm: $alarm")
         //停止振动
@@ -320,6 +333,35 @@ class ForegroundService : Service() {
             //播放警报
             LiveEventBus.get<AlarmSetting>(EVENT_ALARM_ACTION).observeForever(alarmObserver)
 
+            //短信轮询兜底：补发广播漏掉的验证码/通知类短信
+            smsPollJob?.cancel()
+            smsPollJob = GlobalScope.launch(Dispatchers.IO) {
+                while (isActive) {
+                    delay(SmsPollUtils.POLL_INTERVAL_MS)
+                    try {
+                        SmsPollUtils.pollOnce(this@ForegroundService)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "smsPoll: ${e.message}")
+                    }
+                }
+            }
+
+            //短信库变化监听：事件驱动即时补发（水位推到已处理短信时间，靠去重与轮询互备）
+            smsObserver?.let { contentResolver.unregisterContentObserver(it) }
+            smsObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean, uri: Uri?) {
+                    Log.d(TAG, "SmsObserver onChange selfChange=$selfChange uri=$uri")
+                    GlobalScope.launch(Dispatchers.IO) {
+                        try {
+                            SmsPollUtils.pollOnce(this@ForegroundService, advanceWatermark = false)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "smsObserver: ${e.message}")
+                        }
+                    }
+                }
+            }
+            contentResolver.registerContentObserver(Uri.parse("content://sms"), true, smsObserver!!)
+
         } catch (e: Exception) {
             handleException(e, "startForegroundService")
         }
@@ -328,6 +370,10 @@ class ForegroundService : Service() {
 
     private fun stopForegroundService() {
         try {
+            smsPollJob?.cancel()
+            smsPollJob = null
+            smsObserver?.let { contentResolver.unregisterContentObserver(it) }
+            smsObserver = null
             stopForeground(true)
             stopSelf()
             compositeDisposable.dispose()

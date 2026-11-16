@@ -920,6 +920,8 @@
     <string name="grant_permission">授予权限</string>
     <string name="sms_read_test">短信读取测试</string>
     <string name="sms_read_test_short">读取测试</string>
+    <string name="sms_polling">短信库兜底转发</string>
+    <string name="sms_polling_tips">监听短信库变化即时补发系统漏广播给本应用的验证码/通知类短信，并定时轮询兜底，与广播转发自动去重</string>
     <string name="sms_only_code">只看疑似验证码短信</string>
     <string name="sms_code_tag">验证码</string>
     <string name="sms_test_permission">读取短信权限：%1$s</string>
