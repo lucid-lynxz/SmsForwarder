@@ -333,6 +333,12 @@ class ForegroundService : Service() {
             //播放警报
             LiveEventBus.get<AlarmSetting>(EVENT_ALARM_ACTION).observeForever(alarmObserver)
 
+            //首次启动把水位初始化为当前时间：否则水位为 0 时 observer 路径会直接 return，
+            //要等 5 分钟后首次定时轮询才初始化，期间收到的验证码（HyperOS 扣留广播）会漏发
+            if (SettingUtils.smsPollLastDate <= 0L) {
+                SettingUtils.smsPollLastDate = System.currentTimeMillis()
+            }
+
             //短信轮询兜底：补发广播漏掉的验证码/通知类短信
             smsPollJob?.cancel()
             smsPollJob = GlobalScope.launch(Dispatchers.IO) {
