@@ -28,3 +28,6 @@
 /pic/*.vsdx
 /psd
 /pic/*.psd
+
+# 临时 UI 调试产物（截图/页面dump/构建日志）
+/.tmp-ui/

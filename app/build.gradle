@@ -87,7 +87,7 @@ android {
         }
 
         ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            //ABI 由下方 splits.abi 统一控制（仅 arm64-v8a），此处不可再设 abiFilters，否则 AGP 报 Conflicting configuration
         }
     }
 
@@ -178,8 +178,8 @@ android {
         abi {
             enable true
             reset()
-            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
-            universalApk true
+            include 'arm64-v8a'
+            universalApk false
         }
     }
     def abiCodes = ['universal': 1, 'armeabi-v7a': 2, 'arm64-v8a': 3, 'x86': 4, 'x86_64': 5]
