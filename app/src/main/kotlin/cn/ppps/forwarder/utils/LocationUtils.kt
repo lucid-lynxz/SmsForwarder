@@ -30,6 +30,10 @@ object LocationUtils {
 
     private const val LOCATION_MODE_OFF = 0
 
+    //钉钉 markdown 会把连续换行折叠，用私有区占位符「先标记后解析」区分紧挨换行与可见间隔
+    const val MD_LF = "@@LF@@"   //单个换行（位置块内部/模板单换行，解析为普通分行）
+    const val MD_GAP = "@@GAP@@"  //空行/位置块前，解析为 &nbsp; 占位形成的可见间隔
+
     //WGS-84 转 GCJ-02（国测局坐标）所需参数，高德/腾讯地图使用 GCJ-02，直接给 GPS 原始坐标会偏移几十到几百米
     private const val SEMI_MAJOR_AXIS = 6378245.0
     private const val ECCENTRICITY_SQUARED = 0.00669342162296594323
@@ -117,10 +121,13 @@ object LocationUtils {
         Log.d("LocationUtils", "appendLocation: from=$from emit=$emit")
         if (!emit) return content
         //先按旧水位算出移动距离，再推进水位，否则永远算出 0
-        val locationText = buildLocationText(apiLocationCache, style, msgKey)
+        val mdProtect = style == LocationLinkStyle.MARKDOWN
+        val locationText = buildLocationText(apiLocationCache, style, msgKey, mdProtect)
         markLocationEmitted(msgKey)
         markLocationReported(apiLocationCache, msgKey)
-        return content + "\n" + locationText
+        //markdown 通道连续换行会被折叠，自动附带也要走哨兵换行，保证位置块逐行显示
+        val sep = if (mdProtect) MD_LF else "\n"
+        return content + sep + locationText
     }
 
     //双阈值节流：移动超距离 或 距上次透出超时长 才再次透出；同一条消息的多次渲染（多通道/重试）靠 msgKey 保持一致
@@ -170,7 +177,9 @@ object LocationUtils {
     }
 
     //位置块：经纬度（按通道形态带链接）+ 移动提醒 + 地址 + 采集时间，自动附带与 {{LOCATION}} 标签共用
-    fun buildLocationText(location: LocationInfo, style: LocationLinkStyle = LocationLinkStyle.PLAIN, msgKey: String = ""): String {
+    fun buildLocationText(location: LocationInfo, style: LocationLinkStyle = LocationLinkStyle.PLAIN, msgKey: String = "", mdProtect: Boolean = false): String {
+        //mdProtect：钉钉 markdown 下用占位符标记换行，块内保持紧挨；是否留可见间隔由模板里的空行决定，不自动加
+        val lf = if (mdProtect) MD_LF else "\n"
         if (location.latitude == 0.0 && location.longitude == 0.0) {
             return getString(R.string.append_location_unready)
         }
@@ -180,18 +189,22 @@ object LocationUtils {
         val lngText = String.format(Locale.US, "%.6f", gcj[1])
         val latText = String.format(Locale.US, "%.6f", gcj[0])
         val url = String.format(getString(R.string.append_location_map_url), lngText, latText)
+        //markdown/html 把链接藏进经纬度；明文通道无法内链，坐标行只留数值，URL 放到整段最下面单独一行
+        val plain = style == LocationLinkStyle.PLAIN
         val coordText = when (style) {
             LocationLinkStyle.MARKDOWN -> "[$lngText,$latText]($url)"
             LocationLinkStyle.HTML -> "<a href=\"$url\">$lngText,$latText</a>"
-            LocationLinkStyle.PLAIN -> "$lngText,$latText $url"
+            LocationLinkStyle.PLAIN -> "$lngText,$latText"
         }
 
-        var text = String.format(getString(R.string.append_location_coord_line), coordText)
-        locationMoveLine(location, msgKey)?.let { text += "\n" + it }
+        val lines = mutableListOf(String.format(getString(R.string.append_location_coord_line), coordText))
+        locationMoveLine(location, msgKey)?.let { lines.add(it) }
         if (location.address.isNotEmpty()) {
-            text += "\n" + String.format(getString(R.string.append_location_address_line), location.address)
+            lines.add(String.format(getString(R.string.append_location_address_line), location.address))
         }
-        return text + "\n" + collectTimeText(location.time)
+        lines.add(collectTimeText(location.time))
+        if (plain) lines.add(url)
+        return lines.joinToString(lf)
     }
 
     //相对上次已发送位置的移动提醒；msgKey 为空表示只是渲染描述（日志/toString），不掺提醒

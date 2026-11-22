@@ -284,7 +284,9 @@ data class MsgInfo(
         var result = this
         //标签输出与「自动附带」共用同一个位置块，定时任务的 {{LOCATION}} 同样带链接与移动提醒；模板没用到就不拼
         if (contains(getString(R.string.tag_location), ignoreCase = true)) {
-            var locationStr = "\n" + LocationUtils.buildLocationText(location, linkStyle, locationMsgKey) + "\n"
+            val mdProtect = linkStyle == LocationLinkStyle.MARKDOWN
+            val nl = if (mdProtect) LocationUtils.MD_LF else "\n"
+            var locationStr = nl + LocationUtils.buildLocationText(location, linkStyle, locationMsgKey, mdProtect = mdProtect) + nl
             if (markLocation) {
                 LocationUtils.markLocationReported(location, locationMsgKey)
             }

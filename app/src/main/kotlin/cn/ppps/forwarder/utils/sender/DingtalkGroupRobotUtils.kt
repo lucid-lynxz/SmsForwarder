@@ -8,6 +8,7 @@ import cn.ppps.forwarder.entity.result.DingtalkResult
 import cn.ppps.forwarder.entity.setting.DingtalkGroupRobotSetting
 import cn.ppps.forwarder.utils.LocationLinkStyle
 import cn.ppps.forwarder.utils.Log
+import cn.ppps.forwarder.utils.LocationUtils
 import cn.ppps.forwarder.utils.SendUtils
 import cn.ppps.forwarder.utils.SettingUtils
 import cn.ppps.forwarder.utils.interceptor.LoggingInterceptor
@@ -35,12 +36,30 @@ class DingtalkGroupRobotUtils private constructor() {
             msgId: Long = 0L
         ) {
             //markdown 消息把地图链接藏进经纬度，text 消息只能保留裸链接
-            val linkStyle = if (setting.msgtype == "markdown") LocationLinkStyle.MARKDOWN else LocationLinkStyle.PLAIN
+            val isMarkdown = setting.msgtype == "markdown"
+            val linkStyle = if (isMarkdown) LocationLinkStyle.MARKDOWN else LocationLinkStyle.PLAIN
+            //钉钉 markdown 会折叠连续换行，用占位符「先标记后解析」：单换行→正常分行、空行→&nbsp; 可见间隔
+            val template = if (isMarkdown) {
+                rule?.smsTemplate?.replace("\r\n", "\n")?.replace("\n{2,}".toRegex(), LocationUtils.MD_GAP)?.replace("\n", LocationUtils.MD_LF) ?: ""
+            } else {
+                rule?.smsTemplate ?: ""
+            }
             var content: String = if (rule != null) {
-                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title, linkStyle = linkStyle)
+                msgInfo.getContentForSend(template, rule.regexReplace, rule.title, linkStyle = linkStyle)
             } else {
                 msgInfo.getContentForSend(SettingUtils.smsTemplate, linkStyle = linkStyle)
             }
+            if (isMarkdown) {
+                content = content.replace(LocationUtils.MD_LF, "\n\n")
+                    .replace(LocationUtils.MD_GAP, "\n\n&nbsp;\n\n")
+                    .replace("\r\n", "\n")
+                //钉钉 md 里 ≥3 连续换行与 2 个渲染相同：多余换行并成一组、连续 &nbsp; 占位行合并、首尾残留间隔清掉
+                content = content.replace("\n{3,}".toRegex(), "\n\n")
+                    .replace("(?:&nbsp;\n*)+&nbsp;".toRegex(), "&nbsp;")
+                    .replace("\n*&nbsp;\n*".toRegex(), "\n\n&nbsp;\n\n")
+                    .replace("(\n*&nbsp;)+\n*$".toRegex(), "").trimEnd()
+            }
+            val mentionSeparator = if (isMarkdown) "\n\n" else " "
 
             var requestUrl = if (setting.token.startsWith("http")) setting.token else "https://oapi.dingtalk.com/robot/send?access_token=" + setting.token
 
@@ -71,7 +90,7 @@ class DingtalkGroupRobotUtils private constructor() {
                         atMap["atMobiles"] = atMobilesArray
                         for (atMobile in atMobilesArray) {
                             if (!content.contains("@${atMobile}")) {
-                                content += " @${atMobile}"
+                                content += mentionSeparator + "@${atMobile}"
                             }
                         }
                     }
@@ -82,7 +101,7 @@ class DingtalkGroupRobotUtils private constructor() {
                         atMap["atDingtalkIds"] = atDingtalkIdsArray
                         for (atDingtalkId in atDingtalkIdsArray) {
                             if (!content.contains("@${atDingtalkId}")) {
-                                content += " @${atDingtalkId}"
+                                content += mentionSeparator + "@${atDingtalkId}"
                             }
                         }
                     }
