@@ -163,6 +163,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
         switchAppendLocation(binding!!.sbAppendLocation, binding!!.layoutAppendLocationApps)
         refreshAppendLocationAppsText(binding!!.tvAppendLocationApps)
         editAppendLocationThrottle(binding!!.etAppendLocationDistance, binding!!.etAppendLocationInterval)
+        editLocationMoveDistance(binding!!.etLocationMoveDistance)
         //短信指令
         switchEnableSmsCommand(binding!!.sbEnableSmsCommand, binding!!.etSafePhone)
         //靠近听筒关屏
@@ -766,6 +767,18 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding?>(), View.OnClickL
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable) {
                 SettingUtils.appendLocationIntervalMin = s.toString().trim().toIntOrNull() ?: return
+            }
+        })
+    }
+
+    //移动提醒阈值：与上次发出的位置比距离，边改边存；清空或非法输入不动已存值
+    private fun editLocationMoveDistance(etMoveDistance: EditText) {
+        etMoveDistance.setText("${SettingUtils.locationMoveDistanceM}")
+        etMoveDistance.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable) {
+                SettingUtils.locationMoveDistanceM = s.toString().trim().toIntOrNull() ?: return
             }
         })
     }

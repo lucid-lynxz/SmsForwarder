@@ -182,6 +182,16 @@ class SettingUtils private constructor() {
         var appendLocationLastLng: Float by SharedPreference(SP_APPEND_LOCATION_LAST_LNG, 0f)
         var appendLocationLastMsg: String by SharedPreference(SP_APPEND_LOCATION_LAST_MSG, "")
 
+        //位置块移动提醒：比「上次已发送的位置」移动超过该距离（米）才加一行提醒；0=不提醒
+        var locationMoveDistanceM: Int by SharedPreference(SP_LOCATION_MOVE_DISTANCE_M, 500)
+
+        //上次已发送位置的落点（落盘，进程重启不丢）；自动附带与 {{LOCATION}} 标签共用这一份水位
+        var locationMoveLastTime: Long by SharedPreference(SP_LOCATION_MOVE_LAST_TIME, 0L)
+        var locationMoveLastLat: Float by SharedPreference(SP_LOCATION_MOVE_LAST_LAT, 0f)
+        var locationMoveLastLng: Float by SharedPreference(SP_LOCATION_MOVE_LAST_LNG, 0f)
+        var locationMoveLastMsg: String by SharedPreference(SP_LOCATION_MOVE_LAST_MSG, "")
+        var locationMoveLastMeters: Int by SharedPreference(SP_LOCATION_MOVE_LAST_METERS, -1)
+
         //是否跟随系统语言
         //var isFlowSystemLanguage: Boolean by SharedPreference(SP_IS_FLOW_SYSTEM_LANGUAGE, false)
 

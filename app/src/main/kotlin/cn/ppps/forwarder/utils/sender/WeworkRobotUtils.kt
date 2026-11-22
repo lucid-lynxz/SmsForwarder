@@ -4,6 +4,7 @@ import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.entity.MsgInfo
 import cn.ppps.forwarder.entity.result.WeworkRobotResult
 import cn.ppps.forwarder.entity.setting.WeworkRobotSetting
+import cn.ppps.forwarder.utils.LocationLinkStyle
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.SendUtils
 import cn.ppps.forwarder.utils.SettingUtils
@@ -26,10 +27,12 @@ class WeworkRobotUtils private constructor() {
             logId: Long = 0L,
             msgId: Long = 0L
         ) {
+            //markdown 消息把地图链接藏进经纬度，text 消息只能保留裸链接
+            val linkStyle = if (setting.msgType == "markdown") LocationLinkStyle.MARKDOWN else LocationLinkStyle.PLAIN
             val content: String = if (rule != null) {
-                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title)
+                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title, linkStyle = linkStyle)
             } else {
-                msgInfo.getContentForSend(SettingUtils.smsTemplate)
+                msgInfo.getContentForSend(SettingUtils.smsTemplate, linkStyle = linkStyle)
             }
 
             val requestUrl = setting.webHook

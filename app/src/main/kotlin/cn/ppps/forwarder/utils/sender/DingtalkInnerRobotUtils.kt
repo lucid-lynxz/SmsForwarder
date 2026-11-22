@@ -6,6 +6,7 @@ import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.entity.MsgInfo
 import cn.ppps.forwarder.entity.result.DingtalkInnerRobotResult
 import cn.ppps.forwarder.entity.setting.DingtalkInnerRobotSetting
+import cn.ppps.forwarder.utils.LocationLinkStyle
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.SendUtils
 import cn.ppps.forwarder.utils.SettingUtils
@@ -131,10 +132,12 @@ class DingtalkInnerRobotUtils private constructor() {
             val requestUrl = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
             Log.d(TAG, "requestUrl：$requestUrl")
 
+            //sampleMarkdown 把地图链接藏进经纬度，普通消息只能保留裸链接
+            val linkStyle = if ("sampleMarkdown" == setting.msgKey) LocationLinkStyle.MARKDOWN else LocationLinkStyle.PLAIN
             val content: String = if (rule != null) {
-                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title)
+                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title, linkStyle = linkStyle)
             } else {
-                msgInfo.getContentForSend(SettingUtils.smsTemplate)
+                msgInfo.getContentForSend(SettingUtils.smsTemplate, linkStyle = linkStyle)
             }
 
             val msgParam: MutableMap<String, Any> = mutableMapOf()

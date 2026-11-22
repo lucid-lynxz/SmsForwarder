@@ -1015,7 +1015,12 @@
     <string name="append_location_interval_label">透出間隔</string>
     <string name="append_location_throttle_tips">移動超過閾值、或距上次透出超過間隔時才再次附帶位置；任一填 0 表示每條都帶</string>
 
-    <string name="append_location_coord_line">經緯度: %1$s,%2$s</string>
+    <string name="append_location_coord_line">經緯度: %1$s</string>
+    <string name="append_location_moved_line">較上次發出位置移動 %1$s（%2$s）</string>
+    <string name="append_location_distance_meter">%1$d 米</string>
+    <string name="append_location_distance_km">%1$s 公里</string>
+    <string name="location_move_label">移動提醒閾值</string>
+    <string name="location_move_tips">每條位置都與上次發出的位置比距離，超過該值就加一行移動提醒（附帶位置與 {{LOCATION}} 標籤都生效）；填 0 不提醒</string>
     <string name="append_location_address_line">地址: %1$s</string>
     <string name="append_location_time_line">採集於 %1$s（%2$s）</string>
     <string name="append_location_time_only">採集於 %1$s</string>

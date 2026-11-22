@@ -909,6 +909,55 @@
 
                     </LinearLayout>
 
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="@string/location_move_tips"
+                        android:textSize="@dimen/text_size_mini"
+                        tools:ignore="SmallSp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/location_move_label"
+                            android:textSize="@dimen/text_size_small"
+                            android:textStyle="bold" />
+
+                        <com.xuexiang.xui.widget.edittext.materialedittext.MaterialEditText
+                            android:id="@+id/et_location_move_distance"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:layout_weight="1"
+                            android:digits="0123456789"
+                            android:inputType="number"
+                            android:singleLine="true"
+                            android:textAlignment="center"
+                            app:met_allowEmpty="false"
+                            app:met_autoValidate="true"
+                            app:met_errorMessage="@string/tip_number_only_error_message"
+                            app:met_regexp="@string/regexp_number_only"
+                            app:met_validateOnFocusLost="true"
+                            tools:ignore="TextContrastCheck,TouchTargetSizeCheck" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:text="@string/meter"
+                            android:textSize="@dimen/text_size_small"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
 
             </LinearLayout>

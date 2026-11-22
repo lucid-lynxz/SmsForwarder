@@ -18,8 +18,12 @@ import kotlin.math.abs
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+
+//位置块里地图链接的呈现形态：markdown/HTML 通道把链接藏进经纬度，其余通道只能保留裸链接
+enum class LocationLinkStyle { PLAIN, MARKDOWN, HTML }
 
 @Suppress("DEPRECATION")
 object LocationUtils {
@@ -106,14 +110,17 @@ object LocationUtils {
     }
 
     //转发消息末尾附带最新位置：需要时按需单次定位刷新缓存，不做常驻定位
-    fun appendLocation(content: String, from: String, msgKey: String): String {
+    fun appendLocation(content: String, from: String, msgKey: String, style: LocationLinkStyle = LocationLinkStyle.PLAIN): String {
         if (content.isEmpty()) return content
         if (willAppendLocation(from)) ensureFreshLocation()
         val emit = shouldEmitLocation(from, msgKey)
         Log.d("LocationUtils", "appendLocation: from=$from emit=$emit")
         if (!emit) return content
+        //先按旧水位算出移动距离，再推进水位，否则永远算出 0
+        val locationText = buildLocationText(apiLocationCache, style, msgKey)
         markLocationEmitted(msgKey)
-        return content + "\n" + buildLocationText(apiLocationCache)
+        markLocationReported(apiLocationCache, msgKey)
+        return content + "\n" + locationText
     }
 
     //双阈值节流：移动超距离 或 距上次透出超时长 才再次透出；同一条消息的多次渲染（多通道/重试）靠 msgKey 保持一致
@@ -162,7 +169,8 @@ object LocationUtils {
         return 2 * EARTH_RADIUS_M * asin(sqrt(a))
     }
 
-    private fun buildLocationText(location: LocationInfo): String {
+    //位置块：经纬度（按通道形态带链接）+ 移动提醒 + 地址 + 采集时间，自动附带与 {{LOCATION}} 标签共用
+    fun buildLocationText(location: LocationInfo, style: LocationLinkStyle = LocationLinkStyle.PLAIN, msgKey: String = ""): String {
         if (location.latitude == 0.0 && location.longitude == 0.0) {
             return getString(R.string.append_location_unready)
         }
@@ -171,13 +179,66 @@ object LocationUtils {
         //固定用 Locale.US 格式化：部分语言环境会把小数点输出成逗号，拼进地图链接的 position 参数会失效
         val lngText = String.format(Locale.US, "%.6f", gcj[1])
         val latText = String.format(Locale.US, "%.6f", gcj[0])
+        val url = String.format(getString(R.string.append_location_map_url), lngText, latText)
+        val coordText = when (style) {
+            LocationLinkStyle.MARKDOWN -> "[$lngText,$latText]($url)"
+            LocationLinkStyle.HTML -> "<a href=\"$url\">$lngText,$latText</a>"
+            LocationLinkStyle.PLAIN -> "$lngText,$latText $url"
+        }
 
-        var text = String.format(getString(R.string.append_location_coord_line), lngText, latText)
+        var text = String.format(getString(R.string.append_location_coord_line), coordText)
+        locationMoveLine(location, msgKey)?.let { text += "\n" + it }
         if (location.address.isNotEmpty()) {
             text += "\n" + String.format(getString(R.string.append_location_address_line), location.address)
         }
-        text += "\n" + collectTimeText(location.time)
-        return text + "\n" + String.format(getString(R.string.append_location_map_url), lngText, latText)
+        return text + "\n" + collectTimeText(location.time)
+    }
+
+    //相对上次已发送位置的移动提醒；msgKey 为空表示只是渲染描述（日志/toString），不掺提醒
+    private fun locationMoveLine(location: LocationInfo, msgKey: String): String? {
+        if (msgKey.isEmpty()) return null
+        val threshold = SettingUtils.locationMoveDistanceM
+        if (threshold <= 0) return null
+        val meters = movedMeters(location, msgKey) ?: return null
+        if (meters < threshold) return null
+        return String.format(
+            getString(R.string.append_location_moved_line),
+            distanceText(meters),
+            elapsedText(System.currentTimeMillis() - SettingUtils.locationMoveLastTime)
+        )
+    }
+
+    //与上次已发送位置的距离；同一条消息多通道/重试复用首次算出的值，保证各通道文案一致
+    private fun movedMeters(location: LocationInfo, msgKey: String): Int? {
+        if (location.latitude == 0.0 && location.longitude == 0.0) return null
+        if (msgKey.isNotEmpty() && msgKey == SettingUtils.locationMoveLastMsg) {
+            val cached = SettingUtils.locationMoveLastMeters
+            return if (cached >= 0) cached else null
+        }
+        val lastLat = SettingUtils.locationMoveLastLat
+        val lastLng = SettingUtils.locationMoveLastLng
+        //首次上报没有可比的落点，只由 markLocationReported 铺水位，不出提醒
+        if (lastLat == 0f && lastLng == 0f) return null
+        return distanceMeters(lastLat.toDouble(), lastLng.toDouble(), location.latitude, location.longitude).roundToInt()
+    }
+
+    //发出过一段真实坐标就推进水位，下一条位置消息据此判断「走远了没有」；定位未就绪时不动水位
+    fun markLocationReported(location: LocationInfo, msgKey: String) {
+        if (location.latitude == 0.0 && location.longitude == 0.0) return
+        val meters = movedMeters(location, msgKey)
+        SettingUtils.locationMoveLastTime = System.currentTimeMillis()
+        SettingUtils.locationMoveLastLat = location.latitude.toFloat()
+        SettingUtils.locationMoveLastLng = location.longitude.toFloat()
+        SettingUtils.locationMoveLastMsg = msgKey
+        SettingUtils.locationMoveLastMeters = meters ?: -1
+    }
+
+    private fun distanceText(meters: Int): String {
+        return if (meters < 1000) {
+            String.format(getString(R.string.append_location_distance_meter), meters)
+        } else {
+            String.format(getString(R.string.append_location_distance_km), String.format(Locale.US, "%.1f", meters / 1000.0))
+        }
     }
 
     //采集时间 + 距今多久，让收到消息的人知道位置新鲜度

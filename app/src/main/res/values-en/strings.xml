@@ -1014,7 +1014,12 @@
     <string name="append_location_interval_label">Report interval</string>
     <string name="append_location_throttle_tips">Re-append only after moving beyond the threshold or after the interval since the last report; 0 in either field appends to every message</string>
 
-    <string name="append_location_coord_line">Coordinates: %1$s,%2$s</string>
+    <string name="append_location_coord_line">Coordinates: %1$s</string>
+    <string name="append_location_moved_line">Moved %1$s since the last report (%2$s)</string>
+    <string name="append_location_distance_meter">%1$d m</string>
+    <string name="append_location_distance_km">%1$s km</string>
+    <string name="location_move_label">Move alert threshold</string>
+    <string name="location_move_tips">Every location report is compared with the last one actually sent; a hint line is added once it exceeds this distance (works for both appended location and the {{LOCATION}} tag). 0 disables it</string>
     <string name="append_location_address_line">Address: %1$s</string>
     <string name="append_location_time_line">Captured at %1$s (%2$s)</string>
     <string name="append_location_time_only">Captured at %1$s</string>

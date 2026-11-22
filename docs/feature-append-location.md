@@ -12,6 +12,7 @@
   - 已保存但当前列表里找不到的包名（应用被卸载、或它本来就没有启动入口）会**追加在列表末尾**并显示包名，保证还能取消勾选。
   - 存储格式仍是 `append_location_apps` 里**一行一个包名**，与旧版本手写的名单完全兼容，匹配逻辑不变。
 - **位置变化阈值 / 透出间隔**：两个数字输入框（米 / 分钟），默认 **200 米 / 30 分钟**，边改边存；清空或输入非法时保留已存值。任一填 0 = 不节流。
+- **移动提醒阈值**（在 GPS定位服务 展开区域底部，不随「转发消息附带位置」开关隐藏）：数字输入框（米），默认 **500 米**，填 0 = 不提醒。它管的是位置块里那一行「较上次发出位置移动 …」，附带位置与 `{{LOCATION}}` 标签都生效。
 
 开关行只在「GPS定位服务」开启时可见——没有定位服务就没有位置缓存，功能无从生效。
 
@@ -57,17 +58,37 @@
 
 ## 追加内容长什么样
 
+自动附带与模板里的 `{{LOCATION}}` 标签共用同一个位置块（`LocationUtils.buildLocationText`），只有「地图链接」的写法按通道形态分岔：
+
 ```
-经纬度: 116.403672,39.910597
+经纬度: 116.403672,39.910597 https://uri.amap.com/marker?position=116.403672,39.910597&coordinate=gaode&callnative=1
+较上次发出位置移动 1.2 公里（40 分钟前）
 地址: 北京市东城区xxx街道xxx路
 采集于 2026-11-15 12:00:00（3 分钟前）
-https://uri.amap.com/marker?position=116.403672,39.910597&coordinate=gaode&callnative=1
 ```
 
+- **链接不再单独占一行**：纯文本通道把裸链直接接在经纬度后面同一行，短信/IM 靠系统自动识别裸 URL 仍可点。
+- **支持富文本的通道把链接藏进经纬度**：钉钉群机器人 `msgtype=markdown`、企业微信机器人 `msgType=markdown`、钉钉企业内部机器人 `sampleMarkdown` 输出 `[116.403672,39.910597](链接)`；邮件正文按 HTML 发送，输出 `<a href="链接">116.403672,39.910597</a>`。这样企业微信 markdown（裸 URL 不自动识别）也能点，字数还更省。
+  - 通道形态由发送方告诉渲染方：各 sender 调 `getContentForSend(..., linkStyle = ...)`，`LocationLinkStyle` 默认 PLAIN，未列出的通道（短信、Bark、飞书、webhook 等）行为不变。
+  - **没有把链接藏起来的通道，是因为藏了就点不动**：纯文本通道里经纬度变成一串数字，走丢场景反而更糟。
 - **坐标系**：系统定位回调给的是 WGS-84（GPS 原始坐标），这里已转成 **GCJ-02**（国测局/火星坐标），与高德、腾讯地图一致，点开链接不会偏出几百米。境外坐标不偏移（偏移算法只在国内有定义）。**要在 Google Maps 里看的话，这个值是偏的**，请改用 `{{LOCATION_LONGITUDE}}` / `{{LOCATION_LATITUDE}}` 拿原始坐标。
 - **地址行**只有系统 Geocoder 返回结果时才出现（部分 ROM 或无 Google/厂商定位服务时可能始终为空，此时省略该行）。
 - **地图链接**用的是 `uri.amap.com`，不需要 API key；装了高德 APP 会直接唤起，没装则在浏览器打开网页版。
 - 经纬度固定按 `Locale.US` 格式化（6 位小数），避免某些语言环境把小数点输出成逗号导致链接参数失效。
+- `{{LOCATION}}` 标签的输出与本文一致，**不再附带「供应商」那一行**；`LocationInfo.toString()`（日志、到/离地址任务描述用）是同一块的纯描述，不带移动提醒行。
+
+## 移动提醒（走丢兜底的关键一行）
+
+只靠「有消息才转发」，老人一整天不出门、不发消息就完全没有位置。把**定时任务**当心跳用即可：新建一个 CRON 自动任务（例如每 20 分钟一次），通道选钉钉/企业微信机器人，自定义模板里写 `{{LOCATION}}` —— 每次触发都会按需发起一次定位并发出位置块，这就是周期上报，不需要额外的轮询。
+
+在这个块里，每条位置都会与**上一次实际发出的位置**比距离：
+
+- 移动 ≥「移动提醒阈值」（默认 **500 米**，通用设置 → GPS定位服务 区域最底部，边改边存；填 **0 = 不提醒**）时，多出 `较上次发出位置移动 1.2 公里（40 分钟前）` 一行；没超过就不加这一行，保持精简。
+- 收到通知的人因此同时拿到三个信号：**现在在哪**、**离上次见到他moved了多远**、**上次是什么时候发的**。括号里的时长用的是上次发出位置的时刻，不是本次定位时刻。
+- 水位是独立的一份（`location_move_last_*`），**与附带位置的透出节流互不影响**：节流控制「要不要带位置」，水位只用来算距离。定时任务和 app 通知附带的位置共用同一份水位，所以不会因为两条链路各算各的而把距离算成 0 或翻倍。
+- 首次上报（还没有水位）只铺基准、不出提醒；定位未就绪时**不推进水位**，避免把「室内读不到位置」记成「没动」。
+- 同一条消息在多通道、重试里重复渲染时，第一次算出的距离会被复用（同样按「来源包名 + 接收时间」的消息键），各通道看到的移动提醒数字一致。
+- 阈值与省电：提醒粒度取决于心跳频率。定时任务 20 分钟一次，那么「走丢」最迟 20 分钟 + 一次搜星（8 秒超时）后才能看见；间隔越短越及时，但每轮都会点亮一次系统隐私指示（按需单次定位，不会常亮）。
 
 ## 新鲜度与省电（按需单次定位）
 
@@ -106,10 +127,12 @@ https://uri.amap.com/marker?position=116.403672,39.910597&coordinate=gaode&calln
 
 ## 实现位置
 
-- `app/src/main/kotlin/cn/ppps/forwarder/utils/LocationUtils.kt`（`appendLocation()`、`ensureFreshLocation()` 按需刷新、名单匹配、双阈值节流与消息键、WGS-84→GCJ-02、新鲜度文案）
-- `.../entity/MsgInfo.kt`（`getContentForSend(..., withLocation)` 注入点，命中时先抹掉模板里的 `{{LOCATION}}`；`replaceLocationTag` 仅在模板含位置标签时按需刷新；`locationMsgKey` 消息键）
-- `.../utils/SettingUtils.kt` / `Constants.kt`（`enable_append_location`、`append_location_apps`、两个阈值与三个节流状态键，存 SharedPreferences，**不涉及数据库版本**）
-- `.../fragment/SettingsFragment.kt`（`refreshAppendLocationAppsText()` 回显、`openAppendLocationAppsPicker()` 子线程取列表、`showAppendLocationAppsDialog()` 多选对话框、`editAppendLocationThrottle()` 阈值边改边存）
+- `app/src/main/kotlin/cn/ppps/forwarder/utils/LocationUtils.kt`（`appendLocation()`、`ensureFreshLocation()` 按需刷新、名单匹配、双阈值节流与消息键、WGS-84→GCJ-02、新鲜度文案、`buildLocationText()` 位置块与 `LocationLinkStyle` 链接形态、`markLocationReported()` 移动水位与移动提醒行）
+- `.../entity/LocationInfo.kt`（`toString()` 委托给同一个位置块的纯描述）
+- `.../entity/MsgInfo.kt`（`getContentForSend(..., withLocation, linkStyle)` 注入点，命中时先抹掉模板里的 `{{LOCATION}}`；`replaceLocationTag` 仅在模板含位置标签时按需刷新，`markLocation` 只在真正发送的渲染里推进水位；`locationMsgKey` 消息键）
+- `.../utils/sender/DingtalkGroupRobotUtils.kt` / `WeworkRobotUtils.kt` / `DingtalkInnerRobotUtils.kt`（markdown 模式传 `LocationLinkStyle.MARKDOWN`）、`EmailUtils.kt`（传 `HTML`）
+- `.../utils/SettingUtils.kt` / `Constants.kt`（`enable_append_location`、`append_location_apps`、两个节流阈值与三个节流状态键，外加 `location_move_distance_m` 与 `location_move_last_*` 移动水位，均存 SharedPreferences，**不涉及数据库版本**）
+- `.../fragment/SettingsFragment.kt`（`refreshAppendLocationAppsText()` 回显、`openAppendLocationAppsPicker()` 子线程取列表、`showAppendLocationAppsDialog()` 多选对话框、`editAppendLocationThrottle()` 阈值边改边存、`editLocationMoveDistance()` 移动提醒阈值）
 - `.../utils/AppUtils.kt`（`getLaunchableAppsInfo()` 只取名称/包名的轻量列表、`getAppName()` 包名转应用名）
-- `app/src/main/res/layout/fragment_settings.xml`（`layout_location_setting` 内的开关行、应用名回显与「选择应用」按钮）
+- `.../res/layout/fragment_settings.xml`（`layout_location_setting` 内的开关行、应用名回显、「选择应用」按钮、两个节流输入框与移动提醒阈值输入框）
 - `.../service/LocationService.kt`（`requestLocationOnce()` 按需单次定位 + latch 串行化、`onLocationChanged` 写缓存并触发到/离地址任务、`signalOnce()` 唤醒等待方；不再常驻定位）

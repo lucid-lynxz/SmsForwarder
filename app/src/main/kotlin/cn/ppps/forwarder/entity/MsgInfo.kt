@@ -8,6 +8,7 @@ import cn.ppps.forwarder.R
 import cn.ppps.forwarder.utils.AppUtils
 import cn.ppps.forwarder.utils.BatteryUtils
 import cn.ppps.forwarder.utils.HttpServerUtils
+import cn.ppps.forwarder.utils.LocationLinkStyle
 import cn.ppps.forwarder.utils.LocationUtils
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.PhoneUtils
@@ -37,10 +38,11 @@ data class MsgInfo(
     var uid: Int = 0, //APP通知的UID
 ) : Serializable {
 
-    val titleForSend = getTitleForSend()
-
     //同一条消息在多通道、重试里会重复渲染，用「来源+接收时间」做节流判定的消息键
+    //必须排在 titleForSend / smsVoForSend 之前：构造期渲染模板会读它，属性尚未初始化时拿到 null 会直接抛异常
     val locationMsgKey = "$from|${date.time}"
+
+    val titleForSend = getTitleForSend()
 
     //序列化/日志用的原文不带位置，也避免未命中规则的消息在构造时就消耗节流状态
     val smsVoForSend = getContentForSend(withLocation = false)
@@ -51,7 +53,7 @@ data class MsgInfo(
         return replaceTemplate(template, regexReplace, "", ruleTitle)
     }
 
-    fun getContentForSend(ruleSmsTemplate: String = "", regexReplace: String = "", ruleTitle: String = "", withLocation: Boolean = true): String {
+    fun getContentForSend(ruleSmsTemplate: String = "", regexReplace: String = "", ruleTitle: String = "", withLocation: Boolean = true, linkStyle: LocationLinkStyle = LocationLinkStyle.PLAIN): String {
         var customSmsTemplate: String = getString(R.string.tag_from).toString() + "\n" +
                 getString(R.string.tag_sms) + "\n" +
                 getString(R.string.tag_card_slot) + "\n" +
@@ -80,8 +82,9 @@ data class MsgInfo(
         }
 
         //链接、剪贴板这类模板字段只想要模板本身，位置尾巴由调用方用 withLocation=false 关掉
-        val rendered = replaceTemplate(customSmsTemplate, regexReplace, "", ruleTitle)
-        return if (withLocation) LocationUtils.appendLocation(rendered, from, locationMsgKey) else rendered
+        //withLocation=false 的渲染（原文快照、Bark 的 URL/剪贴板）不消耗「上次已发送位置」水位
+        val rendered = replaceTemplate(customSmsTemplate, regexReplace, "", ruleTitle, linkStyle, withLocation)
+        return if (withLocation) LocationUtils.appendLocation(rendered, from, locationMsgKey, linkStyle) else rendered
     }
 
     fun getContentFromJson(jsonTemplate: String, ruleTitle: String = ""): String {
@@ -91,7 +94,7 @@ data class MsgInfo(
     }
 
     @SuppressLint("SimpleDateFormat")
-    fun replaceTemplate(template: String, regexReplace: String = "", encoderName: String = "", ruleTitle: String = ""): String {
+    fun replaceTemplate(template: String, regexReplace: String = "", encoderName: String = "", ruleTitle: String = "", linkStyle: LocationLinkStyle = LocationLinkStyle.PLAIN, markLocation: Boolean = false): String {
         return template.replaceTag(getString(R.string.tag_from), from, encoderName)
             .replaceTag(getString(R.string.tag_package_name), from, encoderName)
             .replaceTag(getString(R.string.tag_sms), content, encoderName)
@@ -141,7 +144,7 @@ data class MsgInfo(
                 encoderName
             )
             .replaceAppNameTag(from, encoderName)
-            .replaceLocationTag(encoderName)
+            .replaceLocationTag(encoderName, linkStyle, markLocation)
             .replaceContactNameTag(encoderName)
             .replacePhoneAreaTag(encoderName)
             .regexReplace(regexReplace)
@@ -260,7 +263,7 @@ data class MsgInfo(
     }
 
     //替换{{LOCATION}}标签
-    private fun String.replaceLocationTag(encoderName: String = ""): String {
+    private fun String.replaceLocationTag(encoderName: String = "", linkStyle: LocationLinkStyle = LocationLinkStyle.PLAIN, markLocation: Boolean = false): String {
         if (TextUtils.isEmpty(this)) return this
 
         //模板里真的用到位置标签时才按需刷新定位，避免无关渲染触发 GPS
@@ -273,20 +276,25 @@ data class MsgInfo(
         }
 
         val location = HttpServerUtils.apiLocationCache
-        var locationStr = location.toString()
         var address = location.address
         when (encoderName) {
-            "Gson" -> {
-                locationStr = toJsonStr(locationStr)
-                address = toJsonStr(address)
-            }
-
-            "URLEncoder" -> {
-                locationStr = URLEncoder.encode(locationStr, "UTF-8")
-                address = URLEncoder.encode(address, "UTF-8")
-            }
+            "Gson" -> address = toJsonStr(address)
+            "URLEncoder" -> address = URLEncoder.encode(address, "UTF-8")
         }
-        return this.replaceTag(getString(R.string.tag_location), locationStr)
+        var result = this
+        //标签输出与「自动附带」共用同一个位置块，定时任务的 {{LOCATION}} 同样带链接与移动提醒；模板没用到就不拼
+        if (contains(getString(R.string.tag_location), ignoreCase = true)) {
+            var locationStr = "\n" + LocationUtils.buildLocationText(location, linkStyle, locationMsgKey) + "\n"
+            if (markLocation) {
+                LocationUtils.markLocationReported(location, locationMsgKey)
+            }
+            when (encoderName) {
+                "Gson" -> locationStr = toJsonStr(locationStr)
+                "URLEncoder" -> locationStr = URLEncoder.encode(locationStr, "UTF-8")
+            }
+            result = result.replaceTag(getString(R.string.tag_location), locationStr)
+        }
+        return result
             .replaceTag(getString(R.string.tag_location_longitude), location.longitude.toString())
             .replaceTag(getString(R.string.tag_location_latitude), location.latitude.toString())
             .replaceTag(getString(R.string.tag_location_address), address)

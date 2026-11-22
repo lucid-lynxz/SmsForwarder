@@ -117,6 +117,14 @@ const val SP_APPEND_LOCATION_LAST_LAT = "append_location_last_lat"
 const val SP_APPEND_LOCATION_LAST_LNG = "append_location_last_lng"
 const val SP_APPEND_LOCATION_LAST_MSG = "append_location_last_msg"
 
+//位置块的移动提醒：与「上次已发送的位置」比距离。阈值 + 上次发送的时间/坐标/消息键/当次距离
+const val SP_LOCATION_MOVE_DISTANCE_M = "location_move_distance_m"
+const val SP_LOCATION_MOVE_LAST_TIME = "location_move_last_time"
+const val SP_LOCATION_MOVE_LAST_LAT = "location_move_last_lat"
+const val SP_LOCATION_MOVE_LAST_LNG = "location_move_last_lng"
+const val SP_LOCATION_MOVE_LAST_MSG = "location_move_last_msg"
+const val SP_LOCATION_MOVE_LAST_METERS = "location_move_last_meters"
+
 const val SP_BLUETOOTH = "enable_bluetooth"
 const val SP_BLUETOOTH_SCAN_INTERVAL = "bluetooth_scan_interval"
 const val SP_BLUETOOTH_IGNORE_ANONYMOUS = "bluetooth_ignore_anonymous"

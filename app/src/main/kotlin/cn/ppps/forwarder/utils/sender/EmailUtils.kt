@@ -6,6 +6,7 @@ import cn.ppps.forwarder.database.entity.Rule
 import cn.ppps.forwarder.entity.MsgInfo
 import cn.ppps.forwarder.entity.setting.EmailSetting
 import cn.ppps.forwarder.utils.Base64
+import cn.ppps.forwarder.utils.LocationLinkStyle
 import cn.ppps.forwarder.utils.Log
 import cn.ppps.forwarder.utils.SendUtils
 import cn.ppps.forwarder.utils.SettingUtils
@@ -45,10 +46,11 @@ class EmailUtils {
             } else {
                 msgInfo.getTitleForSend(setting.title)
             }
+            //邮件正文按 HTML 发送，地图链接直接做成经纬度的超链接
             val message: String = if (rule != null) {
-                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title)
+                msgInfo.getContentForSend(rule.smsTemplate, rule.regexReplace, rule.title, linkStyle = LocationLinkStyle.HTML)
             } else {
-                msgInfo.getContentForSend(SettingUtils.smsTemplate)
+                msgInfo.getContentForSend(SettingUtils.smsTemplate, linkStyle = LocationLinkStyle.HTML)
             }
 
             //常用邮箱类型的转换
