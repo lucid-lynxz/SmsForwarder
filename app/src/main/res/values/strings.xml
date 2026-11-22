@@ -228,6 +228,8 @@
     <string name="test_call_type">测试模拟的通话类型</string>
     <string name="test_inform_title">测试模拟的通知标题</string>
     <string name="test_inform_content">测试模拟的通知内容</string>
+    <string name="test_inform_title_default">测试</string>
+    <string name="test_inform_content_default">链路连通测试，可忽略。</string>
     <string name="sender_logic">执行逻辑</string>
     <string name="sender_logic_all">全部执行</string>
     <string name="sender_logic_until_fail">失败即止</string>

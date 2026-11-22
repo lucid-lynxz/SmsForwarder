@@ -813,6 +813,17 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
         etFrom.setText(cacheFrom)
         etTitle.setText(cacheTitle)
         etContent.setText(cacheContent)
+        //首次测试无缓存时，用规则已定义的匹配值兜底预填来源（app 即包名、sms 即号码），免去重复手填
+        if (cacheFrom.isEmpty() && rule.value.isNotEmpty()) {
+            etFrom.setText(rule.value)
+        }
+        //标题/内容仅为验证转发链路，用户通常不想写：首次无缓存时自动造默认样例
+        if (cacheTitle.isEmpty()) {
+            etTitle.setText(getString(R.string.test_inform_title_default))
+        }
+        if (cacheContent.isEmpty()) {
+            etContent.setText(getString(R.string.test_inform_content_default))
+        }
         val cacheCallTypeIndex = CALL_TYPE_MAP.keys.toList().indexOf(cacheCallType.toString())
         if (cacheCallTypeIndex != -1) {
             callTypeTest = cacheCallType
@@ -826,6 +837,8 @@ class RulesEditFragment : BaseFragment<FragmentRulesEditBinding?>(), View.OnClic
             etTitle.visibility = View.VISIBLE
             tvFrom.setText(R.string.test_package_name)
             tvContent.setText(R.string.test_inform_content)
+            etTitle.hint = getString(R.string.test_inform_title)
+            etContent.hint = getString(R.string.test_inform_content)
             tvCallType.visibility = View.GONE
             spCallType.visibility = View.GONE
         } else if ("call" == ruleType) {
